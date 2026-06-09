@@ -10,12 +10,12 @@ export async function GET() {
     }
 
     const sql = useDb()
-    const transactions = await sql`
+    const transactions: any = await sql`
       SELECT * FROM "Transaction" WHERE "userId" = ${auth.userId}
       ORDER BY "createdAt" DESC LIMIT 50
     `
 
-    return NextResponse.json({ transactions })
+    return NextResponse.json({ transactions: Array.isArray(transactions) ? transactions : [] })
   } catch (error) {
     console.error('Get transactions error:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
@@ -42,8 +42,8 @@ export async function POST(request: Request) {
       VALUES (${id}, ${auth.userId}, ${vendorName}, ${vendorEmail || null}, ${parseFloat(amount)}, 'USD', 'pending', ${paymentMethod || null}, ${description || null}, NOW(), NOW())
     `
 
-    const result = await sql`SELECT * FROM "Transaction" WHERE id = ${id}`
-    const transaction = result[0] || null
+    const result: any = await sql`SELECT * FROM "Transaction" WHERE id = ${id}`
+    const transaction = Array.isArray(result) && result.length > 0 ? result[0] : null
 
     return NextResponse.json({ transaction }, { status: 201 })
   } catch (error) {

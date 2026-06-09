@@ -12,8 +12,8 @@ export async function POST(req: Request) {
     }
 
     const sql = useDb()
-    const existing = await sql`SELECT id FROM "User" WHERE email = ${email}`
-    if (existing.length > 0) {
+    const existing: any = await sql`SELECT id FROM "User" WHERE email = ${email}`
+    if (Array.isArray(existing) && existing.length > 0) {
       return NextResponse.json({ error: 'Email already registered' }, { status: 409 })
     }
 

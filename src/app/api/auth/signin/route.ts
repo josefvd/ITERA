@@ -12,11 +12,11 @@ export async function POST(req: Request) {
     }
 
     const sql = useDb()
-    const users = await sql`
+    const users: any = await sql`
       SELECT id, email, name, password, company, phone
       FROM "User" WHERE email = ${email}
     `
-    if (users.length === 0) {
+    if (!Array.isArray(users) || users.length === 0) {
       return NextResponse.json({ error: 'Invalid email or password' }, { status: 401 })
     }
 
