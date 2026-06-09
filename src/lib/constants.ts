@@ -1,11 +1,11 @@
 export const siteConfig = {
-  name: "FreightPay",
+  name: "ITERA",
   tagline: "Smarter payments for global logistics",
   description:
     "One intelligent ecosystem accelerating payments, streamlining operations, and revolutionizing cargo flow.",
   stats: {
     businesses: "150K",
-    businessesLabel: "logistics businesses",
+    businessesLabel: "logistics businesses trust ITERA",
     processed: "$45B",
     processedLabel: "in freight payments processed since 2021",
     vendors: "6K+",
@@ -16,16 +16,19 @@ export const siteConfig = {
       title: "Payments",
       description:
         "Send and receive authorized payments through regulated financial institutions — securely, efficiently, and with full visibility.",
+      href: "/transactions/new",
     },
     {
       title: "AP Automation",
       description:
         "Automate invoice processing end-to-end for fewer errors, faster approvals, and better cash flow.",
+      href: "/invoices",
     },
     {
       title: "Container Portal",
       description:
         "Instant container release and payment visibility for carriers, terminals, and forwarders worldwide.",
+      href: "/dashboard",
     },
   ],
   features: [
@@ -56,17 +59,18 @@ export const siteConfig = {
     },
   ],
   links: {
-    signIn: "#",
-    signUp: "#",
-    pricing: "#",
-    contactSales: "#",
-    findVendor: "#",
+    signIn: "/signin",
+    signUp: "/register",
+    pricing: "/#pricing",
+    contactSales: "/#contact",
+    findVendor: "/#",
+    dashboard: "/dashboard",
   },
 };
 
 export const navLinks = [
-  { label: "Products", href: "#products" },
-  { label: "Solutions", href: "#features" },
-  { label: "Pricing", href: "#pricing" },
-  { label: "About", href: "#about" },
+  { label: "Products", href: "/#products" },
+  { label: "Solutions", href: "/#features" },
+  { label: "Dashboard", href: "/dashboard" },
+  { label: "Transactions", href: "/transactions" },
 ];

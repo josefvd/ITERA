@@ -15,9 +15,12 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "FreightPay — Smarter payments for global logistics",
+  title: "ITERA — Smarter payments for global logistics",
   description:
     "One intelligent ecosystem accelerating payments, streamlining operations, and revolutionizing cargo flow.",
+  icons: {
+    icon: "/images/logo-source.jpg",
+  },
 };
 
 export default function RootLayout({
