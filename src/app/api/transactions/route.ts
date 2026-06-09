@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { sql } from '@/lib/db'
+import { useDb } from '@/lib/db'
 import { getAuthUser } from '@/lib/auth'
 
 export async function GET() {
@@ -9,6 +9,7 @@ export async function GET() {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
+    const sql = useDb()
     const transactions = await sql`
       SELECT * FROM "Transaction" WHERE "userId" = ${auth.userId}
       ORDER BY "createdAt" DESC LIMIT 50
@@ -29,11 +30,11 @@ export async function POST(request: Request) {
     }
 
     const { vendorName, vendorEmail, amount, description, paymentMethod } = await request.json()
-
     if (!vendorName || !amount) {
       return NextResponse.json({ error: 'Vendor name and amount are required' }, { status: 400 })
     }
 
+    const sql = useDb()
     const id = crypto.randomUUID()
 
     await sql`
@@ -41,10 +42,7 @@ export async function POST(request: Request) {
       VALUES (${id}, ${auth.userId}, ${vendorName}, ${vendorEmail || null}, ${parseFloat(amount)}, 'USD', 'pending', ${paymentMethod || null}, ${description || null}, NOW(), NOW())
     `
 
-    // Fetch back the created transaction
-    const result = await sql`
-      SELECT * FROM "Transaction" WHERE id = ${id}
-    `
+    const result = await sql`SELECT * FROM "Transaction" WHERE id = ${id}`
     const transaction = result[0] || null
 
     return NextResponse.json({ transaction }, { status: 201 })

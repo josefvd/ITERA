@@ -1,11 +1,24 @@
 import { neon } from "@neondatabase/serverless";
 
-if (!process.env.DATABASE_URL) {
-  throw new Error("DATABASE_URL environment variable is required");
+let _sql: ReturnType<typeof neon> | null = null;
+
+function getSql() {
+  if (!_sql) {
+    const url = process.env.DATABASE_URL;
+    if (!url) {
+      throw new Error("DATABASE_URL environment variable is required");
+    }
+    _sql = neon(url);
+  }
+  return _sql;
 }
 
-export const sql = neon(process.env.DATABASE_URL);
+// Lazy accessor — only validates DATABASE_URL when first query runs
+// This prevents build-time crashes when env vars aren't available yet
+export function useDb() {
+  return getSql();
+}
 
-// Helper to run a single query with template literal syntax
-// Usage: await sql`SELECT * FROM "User" WHERE email = ${email}`
+// Convenience re-export
 export { neon };
+export type SqlQuery = ReturnType<typeof neon>;

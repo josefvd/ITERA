@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
 import bcrypt from 'bcryptjs'
-import { sql } from '@/lib/db'
+import { useDb } from '@/lib/db'
 import { createToken } from '@/lib/auth'
 
 export async function POST(req: Request) {
@@ -11,6 +11,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Email and password are required' }, { status: 400 })
     }
 
+    const sql = useDb()
     const users = await sql`
       SELECT id, email, name, password, company, phone
       FROM "User" WHERE email = ${email}
