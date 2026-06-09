@@ -1,73 +1,55 @@
-import { NextResponse } from "next/server";
-import { dbGet, dbQuery } from "@/lib/db";
-import { getAuthUser } from "@/lib/auth";
+import { NextResponse } from 'next/server'
+import { sql } from '@/lib/db'
+import { getAuthUser } from '@/lib/auth'
 
 export async function GET() {
   try {
-    const auth = await getAuthUser();
+    const auth = await getAuthUser()
     if (!auth) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const transactions = dbQuery(
-      "SELECT * FROM Transaction WHERE userId = ? ORDER BY createdAt DESC LIMIT 50",
-      [auth.userId]
-    );
+    const transactions = await sql`
+      SELECT * FROM "Transaction" WHERE "userId" = ${auth.userId}
+      ORDER BY "createdAt" DESC LIMIT 50
+    `
 
-    return NextResponse.json({ transactions });
+    return NextResponse.json({ transactions })
   } catch (error) {
-    console.error("Get transactions error:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+    console.error('Get transactions error:', error)
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
 
 export async function POST(request: Request) {
   try {
-    const auth = await getAuthUser();
+    const auth = await getAuthUser()
     if (!auth) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const { vendorName, vendorEmail, amount, description, paymentMethod } =
-      await request.json();
+    const { vendorName, vendorEmail, amount, description, paymentMethod } = await request.json()
 
     if (!vendorName || !amount) {
-      return NextResponse.json(
-        { error: "Vendor name and amount are required" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'Vendor name and amount are required' }, { status: 400 })
     }
 
-    const id = crypto.randomUUID();
+    const id = crypto.randomUUID()
 
-    dbQuery(
-      `INSERT INTO Transaction (id, userId, vendorName, vendorEmail, amount, currency, status, paymentMethod, description, createdAt, updatedAt)
-       VALUES (?, ?, ?, ?, ?, 'USD', 'pending', ?, ?, datetime('now'), datetime('now'))`,
-      [
-        id,
-        auth.userId,
-        vendorName,
-        vendorEmail || null,
-        parseFloat(amount),
-        paymentMethod || null,
-        description || null,
-      ]
-    );
+    await sql`
+      INSERT INTO "Transaction" (id, "userId", "vendorName", "vendorEmail", amount, currency, status, "paymentMethod", description, "createdAt", "updatedAt")
+      VALUES (${id}, ${auth.userId}, ${vendorName}, ${vendorEmail || null}, ${parseFloat(amount)}, 'USD', 'pending', ${paymentMethod || null}, ${description || null}, NOW(), NOW())
+    `
 
-    const transaction = dbGet(
-      "SELECT * FROM Transaction WHERE id = ?",
-      [id]
-    );
+    // Fetch back the created transaction
+    const result = await sql`
+      SELECT * FROM "Transaction" WHERE id = ${id}
+    `
+    const transaction = result[0] || null
 
-    return NextResponse.json({ transaction }, { status: 201 });
+    return NextResponse.json({ transaction }, { status: 201 })
   } catch (error) {
-    console.error("Create transaction error:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+    console.error('Create transaction error:', error)
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

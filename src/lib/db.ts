@@ -1,23 +1,11 @@
-import Database from "better-sqlite3";
-import path from "path";
+import { neon } from "@neondatabase/serverless";
 
-const dbPath = path.join(process.cwd(), "dev.db");
-const db = new Database(dbPath);
-db.pragma("journal_mode = WAL");
-
-export default db;
-
-export function dbQuery<T = any>(sql: string, params: any[] = []): T[] {
-  const stmt = db.prepare(sql);
-  if (sql.trim().toUpperCase().startsWith("SELECT")) {
-    return stmt.all(...params) as T[];
-  }
-  return stmt.run(...params) as any;
+if (!process.env.DATABASE_URL) {
+  throw new Error("DATABASE_URL environment variable is required");
 }
 
-export function dbGet<T = any>(
-  sql: string,
-  params: any[] = []
-): T | undefined {
-  return db.prepare(sql).get(...params) as T | undefined;
-}
+export const sql = neon(process.env.DATABASE_URL);
+
+// Helper to run a single query with template literal syntax
+// Usage: await sql`SELECT * FROM "User" WHERE email = ${email}`
+export { neon };
