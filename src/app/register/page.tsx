@@ -24,12 +24,12 @@ export default function RegisterPage() {
     setError("");
 
     if (form.password !== form.confirmPassword) {
-      setError("Passwords do not match");
+      setError("Las contraseñas no coinciden");
       return;
     }
 
     if (form.password.length < 6) {
-      setError("Password must be at least 6 characters");
+      setError("La contraseña debe tener al menos 6 caracteres");
       return;
     }
 
@@ -51,13 +51,13 @@ export default function RegisterPage() {
       const data = await res.json();
 
       if (!res.ok) {
-        setError(data.error || "Registration failed");
+        setError(data.error || "Registro fallido");
         return;
       }
 
       router.push("/dashboard");
     } catch {
-      setError("Something went wrong. Please try again.");
+      setError("Algo salió mal. Inténtalo de nuevo.");
     } finally {
       setLoading(false);
     }
@@ -72,10 +72,10 @@ export default function RegisterPage() {
         <div className="bg-white/60 backdrop-blur-xl rounded-2xl shadow-xl border border-brand-beige-dark/20 p-8">
           <div className="text-center mb-8">
             <h1 className="text-2xl font-bold text-brand-near-black">
-              Create your account
+              Crear cuenta
             </h1>
             <p className="text-brand-gray mt-2">
-              Join {siteConfig.name} and streamline your freight payments
+              Únete a {siteConfig.name} y optimiza tus pagos de flete
             </p>
           </div>
 
@@ -88,7 +88,7 @@ export default function RegisterPage() {
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <label htmlFor="name" className="block text-sm font-medium text-brand-warm-dark mb-1.5">
-                Full name *
+                Nombre *
               </label>
               <input
                 id="name"
@@ -103,7 +103,7 @@ export default function RegisterPage() {
 
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-brand-warm-dark mb-1.5">
-                Email address *
+                Correo electrónico *
               </label>
               <input
                 id="email"
@@ -112,14 +112,14 @@ export default function RegisterPage() {
                 value={form.email}
                 onChange={updateField("email")}
                 className="w-full rounded-xl border border-brand-beige-dark/30 bg-white px-4 py-2.5 text-brand-charcoal placeholder:text-brand-taupe focus:outline-none focus:ring-2 focus:ring-brand-near-black/20 focus:border-brand-near-black transition-all"
-                placeholder="you@company.com"
+                placeholder="correo@empresa.com"
               />
             </div>
 
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label htmlFor="company" className="block text-sm font-medium text-brand-warm-dark mb-1.5">
-                  Company
+                  Empresa
                 </label>
                 <input
                   id="company"
@@ -132,7 +132,7 @@ export default function RegisterPage() {
               </div>
               <div>
                 <label htmlFor="phone" className="block text-sm font-medium text-brand-warm-dark mb-1.5">
-                  Phone
+                  Teléfono
                 </label>
                 <input
                   id="phone"
@@ -147,7 +147,7 @@ export default function RegisterPage() {
 
             <div>
               <label htmlFor="password" className="block text-sm font-medium text-brand-warm-dark mb-1.5">
-                Password *
+                Contraseña *
               </label>
               <input
                 id="password"
@@ -156,13 +156,13 @@ export default function RegisterPage() {
                 value={form.password}
                 onChange={updateField("password")}
                 className="w-full rounded-xl border border-brand-beige-dark/30 bg-white px-4 py-2.5 text-brand-charcoal placeholder:text-brand-taupe focus:outline-none focus:ring-2 focus:ring-brand-near-black/20 focus:border-brand-near-black transition-all"
-                placeholder="Min. 6 characters"
+                placeholder="Mín. 6 caracteres"
               />
             </div>
 
             <div>
               <label htmlFor="confirmPassword" className="block text-sm font-medium text-brand-warm-dark mb-1.5">
-                Confirm password *
+                Confirmar contraseña *
               </label>
               <input
                 id="confirmPassword"
@@ -171,7 +171,7 @@ export default function RegisterPage() {
                 value={form.confirmPassword}
                 onChange={updateField("confirmPassword")}
                 className="w-full rounded-xl border border-brand-beige-dark/30 bg-white px-4 py-2.5 text-brand-charcoal placeholder:text-brand-taupe focus:outline-none focus:ring-2 focus:ring-brand-near-black/20 focus:border-brand-near-black transition-all"
-                placeholder="Repeat your password"
+                placeholder="Repite tu contraseña"
               />
             </div>
 
@@ -181,22 +181,22 @@ export default function RegisterPage() {
               className="w-full flex items-center justify-center gap-2 rounded-xl bg-brand-near-black text-white py-2.5 font-medium hover:bg-black transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {loading ? (
-                "Creating account..."
+                "Creando cuenta..."
               ) : (
                 <>
-                  Create Account <UserPlus size={16} />
+                  Crear cuenta <UserPlus size={16} />
                 </>
               )}
             </button>
           </form>
 
           <p className="text-center text-sm text-brand-gray mt-6">
-            Already have an account?{" "}
+            ¿Ya tienes cuenta?{" "}
             <Link
               href="/signin"
               className="text-brand-near-black font-medium hover:underline"
             >
-              Sign in
+              Inicia sesión
             </Link>
           </p>
         </div>

@@ -26,7 +26,6 @@ export default function InvoicesPage() {
   const [error, setError] = useState("");
 
   useEffect(() => {
-    // Check auth first
     fetch("/api/transactions")
       .then((res) => {
         if (res.status === 401) {
@@ -36,11 +35,10 @@ export default function InvoicesPage() {
         return res.json();
       })
       .then(() => {
-        // Invoices would come from a dedicated API, but for now show placeholder
         setLoading(false);
       })
       .catch(() => {
-        setError("Failed to load invoices");
+        setError("Error al cargar las facturas");
         setLoading(false);
       });
   }, [router]);
@@ -48,7 +46,7 @@ export default function InvoicesPage() {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center pt-20">
-        <div className="text-brand-gray text-lg">Loading invoices...</div>
+        <div className="text-brand-gray text-lg">Cargando facturas...</div>
       </div>
     );
   }
@@ -60,10 +58,10 @@ export default function InvoicesPage() {
         <div className="flex items-center justify-between mb-8">
           <div>
             <h1 className="text-3xl font-bold text-brand-near-black">
-              Invoices
+              Facturas
             </h1>
             <p className="text-brand-gray mt-1">
-              View and manage your invoices
+              Revisa y gestiona tus facturas
             </p>
           </div>
           <Link
@@ -71,7 +69,7 @@ export default function InvoicesPage() {
             className="flex items-center gap-2 rounded-xl bg-brand-near-black text-white px-5 py-2.5 font-medium hover:bg-black transition-all text-sm"
           >
             <Plus size={16} />
-            New Payment
+            Nuevo pago
           </Link>
         </div>
 
@@ -88,16 +86,16 @@ export default function InvoicesPage() {
               <FileText size={28} className="text-brand-near-black" />
             </div>
             <h3 className="text-lg font-semibold text-brand-near-black mb-2">
-              No invoices yet
+              Aún no hay facturas
             </h3>
             <p className="text-brand-gray mb-6 max-w-md mx-auto">
-              Invoices will appear here once you create payments with invoice references.
+              Las facturas aparecerán aquí una vez que crees pagos con referencias de factura.
             </p>
             <Link
               href="/transactions/new"
               className="inline-flex items-center gap-2 rounded-xl bg-brand-near-black text-white px-6 py-2.5 font-medium hover:bg-black transition-all text-sm"
             >
-              Create a Payment <ArrowRight size={14} />
+              Crear un pago <ArrowRight size={14} />
             </Link>
           </div>
         </div>

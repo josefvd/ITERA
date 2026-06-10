@@ -1,4 +1,6 @@
-import { siteConfig, navLinks } from "@/lib/constants";
+import { siteConfig } from "@/lib/constants";
+import Image from "next/image";
+import Link from "next/link";
 
 export default function Footer() {
   return (
@@ -7,30 +9,34 @@ export default function Footer() {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
           {/* Brand */}
           <div className="col-span-2 md:col-span-1">
-            <a href="/" className="flex items-center gap-2 mb-4">
-              <div className="h-7 w-7 rounded-full bg-brand-near-black flex items-center justify-center">
-                <span className="text-brand-beige text-xs font-semibold">F</span>
-              </div>
+            <Link href="/" className="flex items-center gap-2 mb-4">
+              <Image
+                src="/images/logo-source.jpg"
+                alt="ITERA"
+                width={28}
+                height={28}
+                className="rounded-full object-cover w-7 h-7"
+              />
               <span className="text-base font-semibold tracking-tight text-brand-charcoal">
                 {siteConfig.name}
               </span>
-            </a>
+            </Link>
             <p className="text-sm text-brand-gray leading-relaxed max-w-xs">
-              Smarter payments for global logistics. One ecosystem accelerating global trade.
+              Pagos más inteligentes para la logística global. Un ecosistema que acelera el comercio global.
             </p>
           </div>
 
           {/* Products */}
           <div>
             <h4 className="text-xs font-semibold uppercase tracking-widest text-brand-warm-dark mb-4">
-              Products
+              Productos
             </h4>
             <ul className="space-y-3">
-              {["Payments", "AP Automation", "Container Portal"].map((item) => (
+              {["Payments", "Access Credits", "Access Pickup Solution"].map((item) => (
                 <li key={item}>
-                  <a href="#" className="text-sm text-brand-gray hover:text-brand-charcoal transition-colors">
+                  <Link href="#" className="text-sm text-brand-gray hover:text-brand-charcoal transition-colors">
                     {item}
-                  </a>
+                  </Link>
                 </li>
               ))}
             </ul>
@@ -39,14 +45,14 @@ export default function Footer() {
           {/* Company */}
           <div>
             <h4 className="text-xs font-semibold uppercase tracking-widest text-brand-warm-dark mb-4">
-              Company
+              Compañía
             </h4>
             <ul className="space-y-3">
-              {["About", "Blog", "Careers", "Contact"].map((item) => (
+              {["Sobre ITERA", "Blog", "Carreras", "Contacto"].map((item) => (
                 <li key={item}>
-                  <a href="#" className="text-sm text-brand-gray hover:text-brand-charcoal transition-colors">
+                  <Link href="#" className="text-sm text-brand-gray hover:text-brand-charcoal transition-colors">
                     {item}
-                  </a>
+                  </Link>
                 </li>
               ))}
             </ul>
@@ -55,14 +61,14 @@ export default function Footer() {
           {/* Resources */}
           <div>
             <h4 className="text-xs font-semibold uppercase tracking-widest text-brand-warm-dark mb-4">
-              Resources
+              Recursos
             </h4>
             <ul className="space-y-3">
-              {["Help Center", "Documentation", "API Reference", "Status"].map((item) => (
+              {["Centro de ayuda", "Documentación", "API", "Estado"].map((item) => (
                 <li key={item}>
-                  <a href="#" className="text-sm text-brand-gray hover:text-brand-charcoal transition-colors">
+                  <Link href="#" className="text-sm text-brand-gray hover:text-brand-charcoal transition-colors">
                     {item}
-                  </a>
+                  </Link>
                 </li>
               ))}
             </ul>
@@ -72,13 +78,13 @@ export default function Footer() {
         {/* Bottom bar */}
         <div className="mt-12 pt-8 border-t border-brand-beige-dark/30 flex flex-col sm:flex-row items-center justify-between gap-4">
           <p className="text-xs text-brand-gray">
-            &copy; {new Date().getFullYear()} {siteConfig.name}. All rights reserved.
+            &copy; {new Date().getFullYear()} {siteConfig.name}. Todos los derechos reservados.
           </p>
           <div className="flex gap-6">
-            {["Privacy", "Terms", "Cookies"].map((item) => (
-              <a key={item} href="#" className="text-xs text-brand-gray hover:text-brand-charcoal transition-colors">
+            {["Privacidad", "Términos", "Cookies"].map((item) => (
+              <Link key={item} href="#" className="text-xs text-brand-gray hover:text-brand-charcoal transition-colors">
                 {item}
-              </a>
+              </Link>
             ))}
           </div>
         </div>

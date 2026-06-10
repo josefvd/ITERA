@@ -40,7 +40,7 @@ export default function TransactionsPage() {
           else setTransactions(data.transactions || []);
         }
       })
-      .catch(() => setError("Failed to load transactions"))
+      .catch(() => setError("Error al cargar transacciones"))
       .finally(() => setLoading(false));
   }, [router]);
 
@@ -56,7 +56,7 @@ export default function TransactionsPage() {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center pt-20">
-        <div className="text-brand-gray text-lg">Loading transactions...</div>
+        <div className="text-brand-gray text-lg">Cargando transacciones...</div>
       </div>
     );
   }
@@ -68,10 +68,10 @@ export default function TransactionsPage() {
         <div className="flex items-center justify-between mb-8">
           <div>
             <h1 className="text-3xl font-bold text-brand-near-black">
-              Transactions
+              Transacciones
             </h1>
             <p className="text-brand-gray mt-1">
-              View and manage all your payments
+              Ve y administra todos tus pagos
             </p>
           </div>
           <Link
@@ -79,7 +79,7 @@ export default function TransactionsPage() {
             className="flex items-center gap-2 rounded-xl bg-brand-near-black text-white px-5 py-2.5 font-medium hover:bg-black transition-all text-sm"
           >
             <Plus size={16} />
-            New Payment
+            Nueva transacción
           </Link>
         </div>
 
@@ -100,7 +100,7 @@ export default function TransactionsPage() {
               type="text"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search by vendor name or email..."
+              placeholder="Buscar por nombre o correo del proveedor..."
               className="w-full rounded-xl border border-brand-beige-dark/30 bg-white/60 backdrop-blur-sm pl-10 pr-4 py-2.5 text-brand-charcoal placeholder:text-brand-taupe focus:outline-none focus:ring-2 focus:ring-brand-near-black/20 focus:border-brand-near-black transition-all text-sm"
             />
           </div>
@@ -109,11 +109,11 @@ export default function TransactionsPage() {
             onChange={(e) => setStatusFilter(e.target.value)}
             className="rounded-xl border border-brand-beige-dark/30 bg-white/60 backdrop-blur-sm px-4 py-2.5 text-brand-charcoal focus:outline-none focus:ring-2 focus:ring-brand-near-black/20 text-sm"
           >
-            <option value="all">All Status</option>
-            <option value="pending">Pending</option>
-            <option value="processing">Processing</option>
-            <option value="completed">Completed</option>
-            <option value="failed">Failed</option>
+            <option value="all">Todas</option>
+            <option value="pending">Pendientes</option>
+            <option value="processing">Procesando</option>
+            <option value="completed">Completadas</option>
+            <option value="failed">Fallidas</option>
           </select>
         </div>
 
@@ -122,12 +122,12 @@ export default function TransactionsPage() {
           {filtered.length === 0 ? (
             <div className="px-6 py-16 text-center text-brand-gray">
               <ArrowUpRight size={32} className="mx-auto mb-3 opacity-50" />
-              <p>No transactions found</p>
+              <p>No se encontraron transacciones</p>
               <Link
                 href="/transactions/new"
                 className="text-brand-near-black font-medium hover:underline mt-2 inline-block"
               >
-                Create your first payment
+                Crea tu primer pago
               </Link>
             </div>
           ) : (
@@ -136,22 +136,22 @@ export default function TransactionsPage() {
                 <thead>
                   <tr className="border-b border-brand-beige-dark/20">
                     <th className="text-left px-6 py-4 text-xs font-semibold uppercase tracking-wider text-brand-gray">
-                      Vendor
+                      Proveedor
                     </th>
                     <th className="text-left px-6 py-4 text-xs font-semibold uppercase tracking-wider text-brand-gray">
-                      Amount
+                      Monto
                     </th>
                     <th className="text-left px-6 py-4 text-xs font-semibold uppercase tracking-wider text-brand-gray">
-                      Status
+                      Estado
                     </th>
                     <th className="text-left px-6 py-4 text-xs font-semibold uppercase tracking-wider text-brand-gray">
-                      Method
+                      Método
                     </th>
                     <th className="text-left px-6 py-4 text-xs font-semibold uppercase tracking-wider text-brand-gray">
-                      Date
+                      Fecha
                     </th>
                     <th className="text-right px-6 py-4 text-xs font-semibold uppercase tracking-wider text-brand-gray">
-                      Details
+                      Detalles
                     </th>
                   </tr>
                 </thead>
@@ -200,7 +200,7 @@ export default function TransactionsPage() {
                           href="#"
                           className="inline-flex items-center gap-1 text-sm font-medium text-brand-near-black hover:underline"
                         >
-                          View <ArrowRight size={12} />
+                          Ver <ArrowRight size={12} />
                         </Link>
                       </td>
                     </tr>

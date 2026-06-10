@@ -2,10 +2,10 @@
 
 import { useRef } from "react";
 import { motion, useInView } from "framer-motion";
-import { Bolt, BarChart3, Globe, ShieldCheck, Network } from "lucide-react";
+import { Bolt, BarChart3, Network, LineChart } from "lucide-react";
 import { siteConfig } from "@/lib/constants";
 
-const featureIcons = [Bolt, BarChart3, Network, Globe, ShieldCheck];
+const featureIcons = [Bolt, BarChart3, Network, LineChart];
 
 export default function Features() {
   const ref = useRef(null);
@@ -22,19 +22,19 @@ export default function Features() {
           className="max-w-xl mb-16"
         >
           <span className="text-xs font-semibold uppercase tracking-widest text-brand-gray">
-            Why {siteConfig.name}
+            Por qué {siteConfig.name}
           </span>
           <h2 className="mt-4 text-3xl sm:text-4xl font-semibold tracking-tight text-brand-charcoal">
-            Solutions built on results
+            Soluciones construidas sobre resultados
           </h2>
           <p className="mt-4 text-base text-brand-gray leading-relaxed">
-            Technology, trust, and trade expertise combined to remove friction and keep
-            supply chains moving.
+            Tecnología, confianza y experiencia en comercio combinadas para eliminar fricciones
+            y mantener las cadenas de suministro en movimiento.
           </p>
         </motion.div>
 
         {/* Features grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           {siteConfig.features.map((feature, i) => {
             const Icon = featureIcons[i % featureIcons.length];
             return (

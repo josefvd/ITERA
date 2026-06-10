@@ -28,27 +28,24 @@ export default function CTA() {
           className="max-w-2xl mx-auto text-center"
         >
           <h2 className="text-3xl sm:text-4xl md:text-5xl font-semibold tracking-tight text-white leading-tight">
-            Ready to move your
-            <br />
-            payments forward?
+            {siteConfig.cta.heading}
           </h2>
           <p className="mt-6 text-base sm:text-lg text-white/60 leading-relaxed max-w-lg mx-auto">
-            Join 150K+ logistics businesses already accelerating payments and streamlining
-            operations with {siteConfig.name}.
+            {siteConfig.cta.description}
           </p>
           <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
             <a
               href={siteConfig.links.signUp}
               className="inline-flex items-center gap-2 rounded-full bg-white px-8 py-3.5 text-sm font-medium text-brand-near-black hover:bg-white/90 transition-all duration-200 group"
             >
-              Get started
+              Comenzar
               <ArrowRight size={16} className="group-hover:translate-x-0.5 transition-transform" />
             </a>
             <a
               href={siteConfig.links.contactSales}
               className="inline-flex items-center gap-2 rounded-full border border-white/20 px-8 py-3.5 text-sm font-medium text-white/80 hover:bg-white/5 hover:border-white/30 transition-all duration-200"
             >
-              Contact sales
+              Contactar ventas
             </a>
           </div>
         </motion.div>

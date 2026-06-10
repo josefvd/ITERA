@@ -15,9 +15,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "ITERA — Smarter payments for global logistics",
+  title: "ITERA — Pagos inteligentes para la logística global",
   description:
-    "One intelligent ecosystem accelerating payments, streamlining operations, and revolutionizing cargo flow.",
+    "La plataforma que simplifica los pagos para liberar carga. Acelera pagos, optimiza operaciones y simplifica el flujo de carga.",
   icons: {
     icon: "/images/logo-source.jpg",
   },
@@ -30,7 +30,7 @@ export default function RootLayout({
 }>) {
   return (
     <html
-      lang="en"
+      lang="es"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col grain">

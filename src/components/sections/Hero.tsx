@@ -33,7 +33,7 @@ export default function Hero() {
           >
             <span className="inline-flex items-center gap-1.5 rounded-full bg-brand-charcoal/5 px-4 py-1.5 text-xs font-medium text-brand-warm-dark">
               <span className="h-1.5 w-1.5 rounded-full bg-brand-gray" />
-              Powered by intelligent payments
+              Pagos inteligentes para logística
             </span>
           </motion.div>
 
@@ -44,18 +44,29 @@ export default function Hero() {
             transition={{ duration: 0.6, ease: "easeOut", delay: 0.1 }}
             className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-semibold tracking-tight leading-[1.05] text-brand-charcoal"
           >
-            {siteConfig.tagline.split("for")[0]}
-            <span className="text-brand-gray block mt-2">for global logistics</span>
+            Pagos más inteligentes
+            <span className="text-brand-gray block mt-2">para la logística global</span>
           </motion.h1>
+
+          {/* Tagline bold */}
+          <motion.p
+            initial={{ opacity: 0, y: 20 }}
+            animate={isInView ? { opacity: 1, y: 0 } : {}}
+            transition={{ duration: 0.5, ease: "easeOut", delay: 0.2 }}
+            className="mt-6 text-lg sm:text-xl font-medium text-brand-warm-dark leading-relaxed"
+          >
+            {siteConfig.taglineBold}
+          </motion.p>
 
           {/* Description */}
           <motion.p
             initial={{ opacity: 0, y: 20 }}
             animate={isInView ? { opacity: 1, y: 0 } : {}}
             transition={{ duration: 0.5, ease: "easeOut", delay: 0.25 }}
-            className="mt-8 text-lg sm:text-xl leading-relaxed text-brand-gray max-w-xl"
+            className="mt-4 text-lg sm:text-xl leading-relaxed text-brand-gray max-w-xl"
           >
-            {siteConfig.description}
+            Un ecosistema inteligente que acelera pagos, optimiza operaciones
+            y simplifica el flujo de carga.
           </motion.p>
 
           {/* CTAs */}
@@ -69,7 +80,7 @@ export default function Hero() {
               href={siteConfig.links.signUp}
               className="inline-flex items-center justify-center gap-2 rounded-full bg-brand-near-black px-8 py-3.5 text-sm font-medium text-white hover:bg-black transition-all duration-200 group"
             >
-              Get started
+              Comenzar
               <ArrowRight size={16} className="group-hover:translate-x-0.5 transition-transform" />
             </a>
             <a
@@ -77,7 +88,7 @@ export default function Hero() {
               className="inline-flex items-center justify-center gap-2 rounded-full border border-brand-light/50 px-8 py-3.5 text-sm font-medium text-brand-warm-dark hover:bg-brand-charcoal/5 hover:border-brand-light transition-all duration-200"
             >
               <Search size={16} />
-              Find a vendor
+              Buscar proveedor
             </a>
           </motion.div>
         </div>
@@ -89,7 +100,7 @@ export default function Hero() {
           transition={{ delay: 1.5, duration: 1 }}
           className="absolute bottom-10 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2"
         >
-          <span className="text-xs text-brand-taupe tracking-widest uppercase">Scroll</span>
+          <span className="text-xs text-brand-taupe tracking-widest uppercase">Desplázate</span>
           <motion.div
             animate={{ y: [0, 6, 0] }}
             transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}

@@ -59,13 +59,13 @@ export default function Header() {
               href={siteConfig.links.signIn}
               className="text-sm font-medium text-brand-warm-dark/80 hover:text-brand-charcoal transition-colors px-4 py-2"
             >
-              Sign In
+              Iniciar Sesión
             </Link>
             <Link
               href={siteConfig.links.signUp}
               className="text-sm font-medium text-white bg-brand-near-black hover:bg-black rounded-full px-5 py-2.5 transition-all duration-200"
             >
-              Get Started
+              Comenzar
             </Link>
           </div>
 
@@ -100,14 +100,14 @@ export default function Header() {
               onClick={() => setMobileOpen(false)}
               className="block text-base font-medium text-brand-warm-dark py-2"
             >
-              Sign In
+              Iniciar Sesión
             </Link>
             <Link
               href={siteConfig.links.signUp}
               onClick={() => setMobileOpen(false)}
               className="block text-center text-base font-medium text-white bg-brand-near-black hover:bg-black rounded-full px-5 py-3 transition-all"
             >
-              Get Started
+              Comenzar
             </Link>
           </div>
         </div>

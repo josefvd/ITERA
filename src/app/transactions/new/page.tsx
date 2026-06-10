@@ -22,7 +22,7 @@ export default function NewTransactionPage() {
     setError("");
 
     if (!form.vendorName || !form.amount || parseFloat(form.amount) <= 0) {
-      setError("Vendor name and a valid amount are required");
+      setError("El nombre del proveedor y un monto válido son obligatorios");
       return;
     }
 
@@ -44,13 +44,13 @@ export default function NewTransactionPage() {
       const data = await res.json();
 
       if (!res.ok) {
-        setError(data.error || "Failed to create transaction");
+        setError(data.error || "Error al crear la transacción");
         return;
       }
 
       router.push("/transactions");
     } catch {
-      setError("Something went wrong. Please try again.");
+      setError("Algo salió mal. Inténtalo de nuevo.");
     } finally {
       setLoading(false);
     }
@@ -61,9 +61,9 @@ export default function NewTransactionPage() {
   ) => setForm((prev) => ({ ...prev, [field]: e.target.value }));
 
   const paymentMethods = [
-    { value: "ach", label: "ACH Transfer" },
-    { value: "wire", label: "Wire Transfer" },
-    { value: "prepaid", label: "Prepaid Card" },
+    { value: "ach", label: "ACH" },
+    { value: "wire", label: "Transferencia" },
+    { value: "prepaid", label: "Prepago" },
   ];
 
   return (
@@ -75,16 +75,16 @@ export default function NewTransactionPage() {
           className="inline-flex items-center gap-1.5 text-sm font-medium text-brand-gray hover:text-brand-charcoal mb-6 transition-colors"
         >
           <ArrowLeft size={14} />
-          Back to transactions
+          Volver a transacciones
         </Link>
 
         <div className="bg-white/60 backdrop-blur-xl rounded-2xl shadow-xl border border-brand-beige-dark/20 p-8">
           <div className="mb-8">
             <h1 className="text-2xl font-bold text-brand-near-black">
-              New Payment
+              Nuevo pago
             </h1>
             <p className="text-brand-gray mt-1">
-              Send a payment to a vendor or service provider
+              Envía un pago a un proveedor o prestador de servicios
             </p>
           </div>
 
@@ -119,7 +119,7 @@ export default function NewTransactionPage() {
                   htmlFor="vendorEmail"
                   className="block text-sm font-medium text-brand-warm-dark mb-1.5"
                 >
-                  Vendor email
+                  Correo del proveedor
                 </label>
                 <input
                   id="vendorEmail"
@@ -137,7 +137,7 @@ export default function NewTransactionPage() {
                 htmlFor="amount"
                 className="block text-sm font-medium text-brand-warm-dark mb-1.5"
               >
-                Amount *
+                Monto *
               </label>
               <div className="relative">
                 <span className="absolute left-4 top-1/2 -translate-y-1/2 text-brand-gray font-medium">
@@ -162,7 +162,7 @@ export default function NewTransactionPage() {
                 htmlFor="paymentMethod"
                 className="block text-sm font-medium text-brand-warm-dark mb-1.5"
               >
-                Payment method
+                Método de pago
               </label>
               <select
                 id="paymentMethod"
@@ -183,7 +183,7 @@ export default function NewTransactionPage() {
                 htmlFor="description"
                 className="block text-sm font-medium text-brand-warm-dark mb-1.5"
               >
-                Description
+                Descripción
               </label>
               <textarea
                 id="description"
@@ -201,10 +201,10 @@ export default function NewTransactionPage() {
               className="w-full flex items-center justify-center gap-2 rounded-xl bg-brand-near-black text-white py-3 font-medium hover:bg-black transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {loading ? (
-                "Processing..."
+                "Procesando..."
               ) : (
                 <>
-                  Send Payment <Send size={16} />
+                  Enviar pago <Send size={16} />
                 </>
               )}
             </button>

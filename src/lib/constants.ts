@@ -1,63 +1,57 @@
 export const siteConfig = {
   name: "ITERA",
-  tagline: "Smarter payments for global logistics",
+  tagline: "Pagos más inteligentes para la logística global",
   description:
-    "One intelligent ecosystem accelerating payments, streamlining operations, and revolutionizing cargo flow.",
-  stats: {
-    businesses: "150K",
-    businessesLabel: "logistics businesses trust ITERA",
-    processed: "$45B",
-    processedLabel: "in freight payments processed since 2021",
-    vendors: "6K+",
-    vendorsLabel: "vendors connected worldwide",
-  },
+    "Un ecosistema inteligente que acelera pagos, optimiza operaciones y simplifica el flujo de carga.",
+  taglineBold: "La plataforma que simplifica los pagos para liberar carga.",
+  stats: null, // Removed per user request
   products: [
     {
       title: "Payments",
       description:
-        "Send and receive authorized payments through regulated financial institutions — securely, efficiently, and with full visibility.",
+        "Envía y recibe pagos autorizados a través de instituciones financieras reguladas — de forma segura, eficiente y con visibilidad total.",
       href: "/transactions/new",
     },
     {
-      title: "AP Automation",
+      title: "Access Credits",
       description:
-        "Automate invoice processing end-to-end for fewer errors, faster approvals, and better cash flow.",
-      href: "/invoices",
+        "Accede a líneas de crédito flexibles para cubrir tus pagos de flete y mantener tu operación en movimiento sin interrupciones.",
+      href: "/transactions/new",
     },
     {
-      title: "Container Portal",
+      title: "Access Pickup Solution",
       description:
-        "Instant container release and payment visibility for carriers, terminals, and forwarders worldwide.",
+        "Coordina y libera tu carga de forma ágil con nuestra solución integrada de recogida, conectando transportistas y terminales en un solo lugar.",
       href: "/dashboard",
     },
   ],
   features: [
     {
-      title: "Built for the pace of trade",
+      title: "Diseñado para el ritmo del comercio",
       description:
-        "Unite payments, data, and decisions in motion. Move goods faster, reduce friction, and gain full visibility across every step of the supply chain.",
+        "Unifica pagos, datos y decisiones en movimiento. Mueve mercancías más rápido, reduce fricciones y obtén visibilidad total en cada paso de la cadena de suministro.",
     },
     {
-      title: "Smarter cash flow & working capital",
+      title: "Flujo de caja y capital de trabajo inteligente",
       description:
-        "Free up funds, optimize payments, and preserve flexibility. Keep goods moving and capital working without slowing operations or losing control.",
+        "Libera fondos, optimiza pagos y preserva la flexibilidad. Mantén las mercancías en movimiento y el capital trabajando sin frenar operaciones.",
     },
     {
-      title: "One network, many players",
+      title: "Una red, muchos actores",
       description:
-        "Connect payers, vendors, and partners worldwide. Build stronger relationships and streamline collaboration across the entire logistics ecosystem.",
+        "Conecta pagadores, proveedores y socios en todo el mundo. Construye relaciones más sólidas y optimiza la colaboración en todo el ecosistema logístico.",
     },
     {
-      title: "Global reach, local compliance",
+      title: "Inteligencia operacional",
       description:
-        "Operate confidently anywhere in the world. Stay compliant with evolving regulations while maintaining trusted, secure connections across markets.",
-    },
-    {
-      title: "Operational intelligence",
-      description:
-        "Turn payment data into actionable insights. Optimize operations, reduce costs, and make smarter decisions with real-time analytics.",
+        "Convierte los datos de pago en información procesable. Optimiza operaciones, reduce costos y toma decisiones más inteligentes con análisis en tiempo real.",
     },
   ],
+  cta: {
+    heading: "¿Listo para mover tus pagos al siguiente nivel?",
+    description:
+      "Acelera pagos y optimiza operaciones con ITERA.",
+  },
   links: {
     signIn: "/signin",
     signUp: "/register",
@@ -69,8 +63,8 @@ export const siteConfig = {
 };
 
 export const navLinks = [
-  { label: "Products", href: "/#products" },
-  { label: "Solutions", href: "/#features" },
+  { label: "Productos", href: "/#products" },
+  { label: "Soluciones", href: "/#features" },
   { label: "Dashboard", href: "/dashboard" },
-  { label: "Transactions", href: "/transactions" },
+  { label: "Transacciones", href: "/transactions" },
 ];

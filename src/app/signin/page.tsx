@@ -28,13 +28,13 @@ export default function SignInPage() {
       const data = await res.json();
 
       if (!res.ok) {
-        setError(data.error || "Sign in failed");
+        setError(data.error || "Inicio de sesión fallido");
         return;
       }
 
       router.push("/dashboard");
     } catch {
-      setError("Something went wrong. Please try again.");
+      setError("Algo salió mal. Inténtalo de nuevo.");
     } finally {
       setLoading(false);
     }
@@ -46,10 +46,10 @@ export default function SignInPage() {
         <div className="bg-white/60 backdrop-blur-xl rounded-2xl shadow-xl border border-brand-beige-dark/20 p-8">
           <div className="text-center mb-8">
             <h1 className="text-2xl font-bold text-brand-near-black">
-              Welcome back
+              Bienvenido de nuevo
             </h1>
             <p className="text-brand-gray mt-2">
-              Sign in to your {siteConfig.name} account
+              Inicia sesión en tu cuenta de {siteConfig.name}
             </p>
           </div>
 
@@ -65,7 +65,7 @@ export default function SignInPage() {
                 htmlFor="email"
                 className="block text-sm font-medium text-brand-warm-dark mb-1.5"
               >
-                Email address
+                Correo electrónico
               </label>
               <input
                 id="email"
@@ -74,7 +74,7 @@ export default function SignInPage() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 className="w-full rounded-xl border border-brand-beige-dark/30 bg-white px-4 py-2.5 text-brand-charcoal placeholder:text-brand-taupe focus:outline-none focus:ring-2 focus:ring-brand-near-black/20 focus:border-brand-near-black transition-all"
-                placeholder="you@company.com"
+                placeholder="correo@empresa.com"
               />
             </div>
 
@@ -83,7 +83,7 @@ export default function SignInPage() {
                 htmlFor="password"
                 className="block text-sm font-medium text-brand-warm-dark mb-1.5"
               >
-                Password
+                Contraseña
               </label>
               <input
                 id="password"
@@ -92,7 +92,7 @@ export default function SignInPage() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 className="w-full rounded-xl border border-brand-beige-dark/30 bg-white px-4 py-2.5 text-brand-charcoal placeholder:text-brand-taupe focus:outline-none focus:ring-2 focus:ring-brand-near-black/20 focus:border-brand-near-black transition-all"
-                placeholder="Enter your password"
+                placeholder="Ingresa tu contraseña"
               />
             </div>
 
@@ -102,22 +102,22 @@ export default function SignInPage() {
               className="w-full flex items-center justify-center gap-2 rounded-xl bg-brand-near-black text-white py-2.5 font-medium hover:bg-black transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {loading ? (
-                "Signing in..."
+                "Iniciando sesión..."
               ) : (
                 <>
-                  Sign In <LogIn size={16} />
+                  Iniciar Sesión <LogIn size={16} />
                 </>
               )}
             </button>
           </form>
 
           <p className="text-center text-sm text-brand-gray mt-6">
-            Don&apos;t have an account?{" "}
+            ¿No tienes cuenta?{" "}
             <Link
               href="/register"
               className="text-brand-near-black font-medium hover:underline"
             >
-              Create one
+              Regístrate
             </Link>
           </p>
         </div>

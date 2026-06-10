@@ -29,7 +29,6 @@ export default function BankingPage() {
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    // Check auth and try to fetch bank accounts
     fetch("/api/transactions")
       .then((res) => {
         if (res.status === 401) {
@@ -40,7 +39,7 @@ export default function BankingPage() {
         return null;
       })
       .catch(() => {
-        setError("Failed to load banking info");
+        setError("Error al cargar información bancaria");
         setLoading(false);
       });
   }, [router]);
@@ -50,7 +49,6 @@ export default function BankingPage() {
     setError("");
     setSaving(true);
 
-    // Simulated save — would POST to /api/banking in production
     const newAccount: BankAccount = {
       id: crypto.randomUUID(),
       accountType: form.accountType,
@@ -62,7 +60,6 @@ export default function BankingPage() {
       isVerified: false,
     };
 
-    // Optimistic local update
     setAccounts((prev) => [...prev, newAccount]);
     setShowForm(false);
     setForm({ accountType: "checking", bankName: "", accountNumber: "", routingNumber: "" });
@@ -76,7 +73,7 @@ export default function BankingPage() {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center pt-20">
-        <div className="text-brand-gray text-lg">Loading...</div>
+        <div className="text-brand-gray text-lg">Cargando...</div>
       </div>
     );
   }
@@ -90,16 +87,16 @@ export default function BankingPage() {
           className="inline-flex items-center gap-1.5 text-sm font-medium text-brand-gray hover:text-brand-charcoal mb-6 transition-colors"
         >
           <ArrowLeft size={14} />
-          Back to dashboard
+          Volver al dashboard
         </Link>
 
         <div className="flex items-center justify-between mb-8">
           <div>
             <h1 className="text-3xl font-bold text-brand-near-black">
-              Banking
+              Configuración bancaria
             </h1>
             <p className="text-brand-gray mt-1">
-              Manage your linked bank accounts and payment methods
+              Gestiona tus cuentas bancarias y métodos de pago
             </p>
           </div>
           <button
@@ -107,7 +104,7 @@ export default function BankingPage() {
             className="flex items-center gap-2 rounded-xl bg-brand-near-black text-white px-5 py-2.5 font-medium hover:bg-black transition-all text-sm"
           >
             <Plus size={16} />
-            Add Account
+            Agregar cuenta
           </button>
         </div>
 
@@ -121,40 +118,40 @@ export default function BankingPage() {
         {showForm && (
           <div className="bg-white/60 backdrop-blur-xl rounded-2xl border border-brand-beige-dark/20 p-6 mb-6 shadow-sm">
             <h2 className="text-lg font-semibold text-brand-near-black mb-4">
-              Add Bank Account
+              Agregar cuenta bancaria
             </h2>
             <form onSubmit={handleAddAccount} className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-brand-warm-dark mb-1.5">
-                  Account type
+                  Tipo de cuenta
                 </label>
                 <select
                   value={form.accountType}
                   onChange={updateField("accountType")}
                   className="w-full rounded-xl border border-brand-beige-dark/30 bg-white px-4 py-2.5 text-brand-charcoal focus:outline-none focus:ring-2 focus:ring-brand-near-black/20"
                 >
-                  <option value="checking">Checking</option>
-                  <option value="prepaid">Prepaid Card</option>
+                  <option value="checking">Corriente</option>
+                  <option value="prepaid">Tarjeta prepago</option>
                 </select>
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-brand-warm-dark mb-1.5">
-                  Bank name
+                  Nombre del banco
                 </label>
                 <input
                   type="text"
                   value={form.bankName}
                   onChange={updateField("bankName")}
                   className="w-full rounded-xl border border-brand-beige-dark/30 bg-white px-4 py-2.5 text-brand-charcoal placeholder:text-brand-taupe focus:outline-none focus:ring-2 focus:ring-brand-near-black/20"
-                  placeholder="Chase, Wells Fargo, etc."
+                  placeholder="Banco Pichincha, Produbanco, etc."
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-brand-warm-dark mb-1.5">
-                    Account number
+                    Número de cuenta
                   </label>
                   <input
                     type="text"
@@ -166,7 +163,7 @@ export default function BankingPage() {
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-brand-warm-dark mb-1.5">
-                    Routing number
+                    Número de ruta
                   </label>
                   <input
                     type="text"
@@ -184,14 +181,14 @@ export default function BankingPage() {
                   disabled={saving}
                   className="flex items-center gap-2 rounded-xl bg-brand-near-black text-white px-5 py-2.5 font-medium hover:bg-black transition-all text-sm disabled:opacity-50"
                 >
-                  {saving ? "Saving..." : "Save Account"}
+                  {saving ? "Guardando..." : "Guardar cuenta"}
                 </button>
                 <button
                   type="button"
                   onClick={() => setShowForm(false)}
                   className="rounded-xl border border-brand-beige-dark/30 px-5 py-2.5 text-brand-gray font-medium hover:text-brand-charcoal transition-all text-sm"
                 >
-                  Cancel
+                  Cancelar
                 </button>
               </div>
             </form>
@@ -206,17 +203,17 @@ export default function BankingPage() {
                 <Building2 size={28} className="text-brand-near-black" />
               </div>
               <h3 className="text-lg font-semibold text-brand-near-black mb-2">
-                No bank accounts linked
+                Sin cuentas bancarias vinculadas
               </h3>
               <p className="text-brand-gray mb-6 max-w-md mx-auto">
-                Add a bank account or prepaid card to start making payments.
+                Agrega una cuenta bancaria o tarjeta prepago para comenzar a hacer pagos.
               </p>
               <button
                 onClick={() => setShowForm(true)}
                 className="inline-flex items-center gap-2 rounded-xl bg-brand-near-black text-white px-6 py-2.5 font-medium hover:bg-black transition-all text-sm"
               >
                 <Plus size={16} />
-                Add Bank Account
+                Agregar cuenta bancaria
               </button>
             </div>
           </div>
@@ -237,10 +234,10 @@ export default function BankingPage() {
                   </div>
                   <div>
                     <p className="font-semibold text-brand-charcoal capitalize">
-                      {account.accountType} Account
+                      {account.accountType === "prepaid" ? "Prepago" : "Corriente"}
                     </p>
                     <p className="text-sm text-brand-gray">
-                      {account.bankName || "Bank"}
+                      {account.bankName || "Banco"}
                       {account.accountNumber
                         ? ` • ${account.accountNumber}`
                         : ""}
@@ -252,13 +249,13 @@ export default function BankingPage() {
                           : "text-yellow-600"
                       }`}
                     >
-                      {account.isVerified ? "Verified" : "Pending verification"}
+                      {account.isVerified ? "Verificada" : "Pendiente de verificación"}
                     </span>
                   </div>
                 </div>
                 <button
                   className="p-2 text-brand-gray hover:text-red-500 transition-colors"
-                  aria-label="Remove account"
+                  aria-label="Eliminar cuenta"
                 >
                   <Trash2 size={16} />
                 </button>

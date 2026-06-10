@@ -2,10 +2,10 @@
 
 import { useRef } from "react";
 import { motion, useInView } from "framer-motion";
-import { ArrowUpRight, Zap, FileText, Container } from "lucide-react";
+import { ArrowUpRight, Zap, CreditCard, Truck } from "lucide-react";
 import { siteConfig } from "@/lib/constants";
 
-const productIcons = [Zap, FileText, Container];
+const productIcons = [Zap, CreditCard, Truck];
 
 export default function Products() {
   const ref = useRef(null);
@@ -22,14 +22,14 @@ export default function Products() {
           className="max-w-xl mb-16"
         >
           <span className="text-xs font-semibold uppercase tracking-widest text-brand-gray">
-            Core Products
+            Productos
           </span>
           <h2 className="mt-4 text-3xl sm:text-4xl font-semibold tracking-tight text-brand-charcoal">
-            Everything you need to move money and cargo
+            Todo lo que necesitas para mover dinero y carga
           </h2>
           <p className="mt-4 text-base text-brand-gray leading-relaxed">
-            From payments and AP automation to financing and container portals — remove friction,
-            accelerate cargo release, and keep supply chains moving.
+            Desde pagos y créditos hasta soluciones de recogida — elimina fricción,
+            acelera la liberación de carga y mantén tus cadenas de suministro en movimiento.
           </p>
         </motion.div>
 
@@ -55,10 +55,10 @@ export default function Products() {
                   {product.description}
                 </p>
                 <a
-                  href="#"
+                  href={product.href}
                   className="inline-flex items-center gap-1.5 text-sm font-medium text-brand-warm-dark hover:text-brand-charcoal transition-colors group/link"
                 >
-                  Learn more
+                  Más información
                   <ArrowUpRight
                     size={14}
                     className="group-hover/link:translate-x-0.5 group-hover/link:-translate-y-0.5 transition-transform"

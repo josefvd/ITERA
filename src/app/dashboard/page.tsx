@@ -47,7 +47,7 @@ export default function DashboardPage() {
           }
         }
       })
-      .catch(() => setError("Failed to load dashboard"))
+      .catch(() => setError("Error al cargar el dashboard"))
       .finally(() => setLoading(false));
   }, [router]);
 
@@ -64,7 +64,7 @@ export default function DashboardPage() {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="text-brand-gray text-lg">Loading dashboard...</div>
+        <div className="text-brand-gray text-lg">Cargando dashboard...</div>
       </div>
     );
   }
@@ -79,7 +79,7 @@ export default function DashboardPage() {
               Dashboard
             </h1>
             <p className="text-brand-gray mt-1">
-              Welcome back to {siteConfig.name}
+              Bienvenido de nuevo a {siteConfig.name}
             </p>
           </div>
           <Link
@@ -87,7 +87,7 @@ export default function DashboardPage() {
             className="flex items-center gap-2 rounded-xl bg-brand-near-black text-white px-5 py-2.5 font-medium hover:bg-black transition-all text-sm"
           >
             <Plus size={16} />
-            New Payment
+            Nuevo pago
           </Link>
         </div>
 
@@ -105,7 +105,7 @@ export default function DashboardPage() {
                 <Wallet size={20} className="text-brand-near-black" />
               </div>
             </div>
-            <p className="text-sm text-brand-gray mb-1">Total Balance</p>
+            <p className="text-sm text-brand-gray mb-1">Balance total</p>
             <p className="text-2xl font-bold text-brand-near-black">
               {formatCurrency(totalBalance)}
             </p>
@@ -117,7 +117,7 @@ export default function DashboardPage() {
                 <Receipt size={20} className="text-brand-near-black" />
               </div>
             </div>
-            <p className="text-sm text-brand-gray mb-1">Transactions</p>
+            <p className="text-sm text-brand-gray mb-1">Transacciones</p>
             <p className="text-2xl font-bold text-brand-near-black">
               {transactions.length}
             </p>
@@ -129,7 +129,7 @@ export default function DashboardPage() {
                 <Clock size={20} className="text-brand-near-black" />
               </div>
             </div>
-            <p className="text-sm text-brand-gray mb-1">Pending</p>
+            <p className="text-sm text-brand-gray mb-1">Pendientes</p>
             <p className="text-2xl font-bold text-brand-near-black">
               {formatCurrency(pendingTotal)}
             </p>
@@ -140,25 +140,25 @@ export default function DashboardPage() {
         <div className="bg-white/60 backdrop-blur-xl rounded-2xl border border-brand-beige-dark/20 shadow-sm mb-10">
           <div className="flex items-center justify-between px-6 py-5 border-b border-brand-beige-dark/20">
             <h2 className="text-lg font-semibold text-brand-near-black">
-              Recent Transactions
+              Transacciones recientes
             </h2>
             <Link
               href="/transactions"
               className="flex items-center gap-1 text-sm font-medium text-brand-near-black hover:underline"
             >
-              View all <ArrowRight size={14} />
+              Ver todas <ArrowRight size={14} />
             </Link>
           </div>
 
           {recentTransactions.length === 0 ? (
             <div className="px-6 py-12 text-center text-brand-gray">
               <Receipt size={32} className="mx-auto mb-3 opacity-50" />
-              <p>No transactions yet</p>
+              <p>Aún no hay transacciones</p>
               <Link
                 href="/transactions/new"
                 className="text-brand-near-black font-medium hover:underline mt-2 inline-block"
               >
-                Create your first payment
+                Crea tu primer pago
               </Link>
             </div>
           ) : (
@@ -206,8 +206,8 @@ export default function DashboardPage() {
             className="flex items-center justify-between bg-white/60 backdrop-blur-xl rounded-2xl border border-brand-beige-dark/20 p-5 hover:shadow-md transition-all"
           >
             <div>
-              <p className="font-semibold text-brand-near-black">New Payment</p>
-              <p className="text-sm text-brand-gray">Send a payment to a vendor</p>
+              <p className="font-semibold text-brand-near-black">Nuevo pago</p>
+              <p className="text-sm text-brand-gray">Envía un pago a un proveedor</p>
             </div>
             <div className="rounded-full bg-brand-beige p-2.5">
               <Plus size={16} className="text-brand-near-black" />
@@ -219,8 +219,8 @@ export default function DashboardPage() {
             className="flex items-center justify-between bg-white/60 backdrop-blur-xl rounded-2xl border border-brand-beige-dark/20 p-5 hover:shadow-md transition-all"
           >
             <div>
-              <p className="font-semibold text-brand-near-black">Transactions</p>
-              <p className="text-sm text-brand-gray">View payment history</p>
+              <p className="font-semibold text-brand-near-black">Transacciones</p>
+              <p className="text-sm text-brand-gray">Ver historial de pagos</p>
             </div>
             <div className="rounded-full bg-brand-beige p-2.5">
               <Receipt size={16} className="text-brand-near-black" />
@@ -232,8 +232,8 @@ export default function DashboardPage() {
             className="flex items-center justify-between bg-white/60 backdrop-blur-xl rounded-2xl border border-brand-beige-dark/20 p-5 hover:shadow-md transition-all"
           >
             <div>
-              <p className="font-semibold text-brand-near-black">Banking</p>
-              <p className="text-sm text-brand-gray">Manage bank accounts</p>
+              <p className="font-semibold text-brand-near-black">Banco</p>
+              <p className="text-sm text-brand-gray">Administrar cuentas bancarias</p>
             </div>
             <div className="rounded-full bg-brand-beige p-2.5">
               <Wallet size={16} className="text-brand-near-black" />
