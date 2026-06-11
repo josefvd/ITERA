@@ -1,6 +1,6 @@
-import { neon } from "@neondatabase/serverless";
+import { neon, NeonQueryFunction } from "@neondatabase/serverless";
 
-let _sql: ReturnType<typeof neon> | null = null;
+let _sql: NeonQueryFunction<any, any> | null = null;
 
 function getSql() {
   if (!_sql) {
@@ -13,12 +13,8 @@ function getSql() {
   return _sql;
 }
 
-// Lazy accessor — only validates DATABASE_URL when first query runs
-// This prevents build-time crashes when env vars aren't available yet
 export function useDb() {
   return getSql();
 }
 
-// Convenience re-export
-export { neon };
-export type SqlQuery = ReturnType<typeof neon>;
+export type { NeonQueryFunction };
