@@ -1,13 +1,11 @@
 "use client";
 
 import { useState, FormEvent } from "react";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { siteConfig } from "@/lib/constants";
 import { LogIn } from "lucide-react";
 
 export default function SignInPage() {
-  const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -32,7 +30,7 @@ export default function SignInPage() {
         return;
       }
 
-      router.push("/dashboard");
+      window.location.assign("/dashboard");
     } catch {
       setError("Algo salió mal. Inténtalo de nuevo.");
     } finally {

@@ -1,20 +1,51 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Menu, X } from "lucide-react";
+import { LogOut, Menu, UserCircle, X } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { navLinks, siteConfig } from "@/lib/constants";
 import Image from "next/image";
 import Link from "next/link";
 
-export default function Header() {
+type HeaderUser = {
+  email: string;
+};
+
+export default function Header({
+  initialUser,
+}: {
+  initialUser: HeaderUser | null;
+}) {
+  const router = useRouter();
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [clientUser, setClientUser] = useState<HeaderUser | null | undefined>(
+    undefined
+  );
+  const user = clientUser ?? initialUser;
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 60);
     window.addEventListener("scroll", handleScroll, { passive: true });
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
+
+  useEffect(() => {
+    fetch("/api/auth/me")
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        setClientUser(data?.user ?? null);
+      })
+      .catch(() => setClientUser(null));
+  }, []);
+
+  async function handleLogout() {
+    await fetch("/api/auth/logout", { method: "POST" });
+    setClientUser(null);
+    setMobileOpen(false);
+    router.push("/");
+    router.refresh();
+  }
 
   return (
     <header
@@ -55,18 +86,40 @@ export default function Header() {
 
           {/* Desktop CTAs */}
           <div className="hidden md:flex items-center gap-3">
-            <Link
-              href={siteConfig.links.signIn}
-              className="text-sm font-medium text-brand-warm-dark/80 hover:text-brand-charcoal transition-colors px-4 py-2"
-            >
-              Iniciar Sesión
-            </Link>
-            <Link
-              href={siteConfig.links.signUp}
-              className="text-sm font-medium text-white bg-brand-near-black hover:bg-black rounded-full px-5 py-2.5 transition-all duration-200"
-            >
-              Comenzar
-            </Link>
+            {user ? (
+              <>
+                <Link
+                  href={siteConfig.links.dashboard}
+                  className="inline-flex items-center gap-2 text-sm font-medium text-brand-warm-dark/80 hover:text-brand-charcoal transition-colors px-4 py-2"
+                >
+                  <UserCircle size={17} />
+                  Perfil
+                </Link>
+                <button
+                  type="button"
+                  onClick={handleLogout}
+                  className="inline-flex items-center gap-2 text-sm font-medium text-white bg-brand-near-black hover:bg-black rounded-full px-5 py-2.5 transition-all duration-200"
+                >
+                  <LogOut size={16} />
+                  Salir
+                </button>
+              </>
+            ) : (
+              <>
+                <Link
+                  href={siteConfig.links.signIn}
+                  className="text-sm font-medium text-brand-warm-dark/80 hover:text-brand-charcoal transition-colors px-4 py-2"
+                >
+                  Iniciar sesión
+                </Link>
+                <Link
+                  href={siteConfig.links.signUp}
+                  className="text-sm font-medium text-white bg-brand-near-black hover:bg-black rounded-full px-5 py-2.5 transition-all duration-200"
+                >
+                  Comenzar
+                </Link>
+              </>
+            )}
           </div>
 
           {/* Mobile hamburger */}
@@ -95,20 +148,43 @@ export default function Header() {
               </Link>
             ))}
             <hr className="border-brand-beige-dark/20" />
-            <Link
-              href={siteConfig.links.signIn}
-              onClick={() => setMobileOpen(false)}
-              className="block text-base font-medium text-brand-warm-dark py-2"
-            >
-              Iniciar Sesión
-            </Link>
-            <Link
-              href={siteConfig.links.signUp}
-              onClick={() => setMobileOpen(false)}
-              className="block text-center text-base font-medium text-white bg-brand-near-black hover:bg-black rounded-full px-5 py-3 transition-all"
-            >
-              Comenzar
-            </Link>
+            {user ? (
+              <>
+                <Link
+                  href={siteConfig.links.dashboard}
+                  onClick={() => setMobileOpen(false)}
+                  className="flex items-center gap-2 text-base font-medium text-brand-warm-dark py-2"
+                >
+                  <UserCircle size={18} />
+                  Perfil
+                </Link>
+                <button
+                  type="button"
+                  onClick={handleLogout}
+                  className="flex w-full items-center justify-center gap-2 text-base font-medium text-white bg-brand-near-black hover:bg-black rounded-full px-5 py-3 transition-all"
+                >
+                  <LogOut size={18} />
+                  Salir
+                </button>
+              </>
+            ) : (
+              <>
+                <Link
+                  href={siteConfig.links.signIn}
+                  onClick={() => setMobileOpen(false)}
+                  className="block text-base font-medium text-brand-warm-dark py-2"
+                >
+                  Iniciar sesión
+                </Link>
+                <Link
+                  href={siteConfig.links.signUp}
+                  onClick={() => setMobileOpen(false)}
+                  className="block text-center text-base font-medium text-white bg-brand-near-black hover:bg-black rounded-full px-5 py-3 transition-all"
+                >
+                  Comenzar
+                </Link>
+              </>
+            )}
           </div>
         </div>
       )}

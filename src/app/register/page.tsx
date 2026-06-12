@@ -1,13 +1,11 @@
 "use client";
 
 import { useState, FormEvent } from "react";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { siteConfig } from "@/lib/constants";
 import { UserPlus } from "lucide-react";
 
 export default function RegisterPage() {
-  const router = useRouter();
   const [form, setForm] = useState({
     name: "",
     email: "",
@@ -55,7 +53,7 @@ export default function RegisterPage() {
         return;
       }
 
-      router.push("/dashboard");
+      window.location.assign("/dashboard");
     } catch {
       setError("Algo salió mal. Inténtalo de nuevo.");
     } finally {
