@@ -11,6 +11,7 @@ import {
   Clock,
   ArrowRight,
   FileText,
+  MessageCircle,
 } from "lucide-react";
 import { formatCurrency, formatDate, getStatusColor } from "@/lib/utils";
 
@@ -112,6 +113,22 @@ export default function ShipmentsPage() {
             {error}
           </div>
         )}
+
+        {/* Forwarding info */}
+        <div className="mb-8 bg-white/70 backdrop-blur-sm rounded-2xl border border-brand-beige-dark/20 p-5 flex items-start gap-4">
+          <div className="flex-shrink-0 rounded-full bg-brand-beige w-10 h-10 flex items-center justify-center">
+            <MessageCircle size={20} className="text-brand-warm-dark" />
+          </div>
+          <div>
+            <p className="text-sm font-medium text-brand-charcoal mb-1">
+              Reenvía facturas a <span className="font-bold text-brand-near-black">invoices@itera.com</span> o vía WhatsApp
+            </p>
+            <p className="text-xs text-brand-gray">
+              ITERA extrae la información automáticamente y agrupa todas las obligaciones por embarque.
+              Un solo clic para pagar todo.
+            </p>
+          </div>
+        </div>
 
         {/* Table */}
         <div className="bg-white/60 backdrop-blur-xl rounded-2xl border border-brand-beige-dark/20 shadow-sm overflow-hidden">
