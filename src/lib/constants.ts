@@ -1,28 +1,22 @@
 export const siteConfig = {
   name: "ITERA",
-  tagline: "Pagos más inteligentes para la logística global",
+  tagline: "Pagos inteligentes para la logística",
   description:
     "Un ecosistema inteligente que acelera pagos, optimiza operaciones y simplifica el flujo de carga.",
   taglineBold: "La plataforma que simplifica los pagos para liberar carga.",
   stats: null, // Removed per user request
   products: [
     {
-      title: "Payments",
+      title: "Pagos",
       description:
         "Envía y recibe pagos autorizados a través de instituciones financieras reguladas — de forma segura, eficiente y con visibilidad total.",
       href: "/transactions/new",
     },
     {
-      title: "Access Credits",
+      title: "Financiamiento",
       description:
         "Accede a líneas de crédito flexibles para cubrir tus pagos de flete y mantener tu operación en movimiento sin interrupciones.",
       href: "/transactions/new",
-    },
-    {
-      title: "Access Pickup Solution",
-      description:
-        "Coordina y libera tu carga de forma ágil con nuestra solución integrada de recogida, conectando transportistas y terminales en un solo lugar.",
-      href: "/dashboard",
     },
   ],
   features: [

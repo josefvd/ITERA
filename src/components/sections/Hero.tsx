@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useRef } from "react";
 import { motion, useInView } from "framer-motion";
 import { ArrowRight, Search } from "lucide-react";
 import { siteConfig } from "@/lib/constants";
@@ -44,8 +44,8 @@ export default function Hero() {
             transition={{ duration: 0.6, ease: "easeOut", delay: 0.1 }}
             className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-semibold tracking-tight leading-[1.05] text-brand-charcoal"
           >
-            Pagos más inteligentes
-            <span className="text-brand-gray block mt-2">para la logística global</span>
+            Pagos inteligentes
+            <span className="text-brand-gray block mt-2">para la logística</span>
           </motion.h1>
 
           {/* Tagline bold */}

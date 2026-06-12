@@ -2,10 +2,10 @@
 
 import { useRef } from "react";
 import { motion, useInView } from "framer-motion";
-import { ArrowUpRight, Zap, CreditCard, Truck } from "lucide-react";
+import { ArrowUpRight, Zap, CreditCard } from "lucide-react";
 import { siteConfig } from "@/lib/constants";
 
-const productIcons = [Zap, CreditCard, Truck];
+const productIcons = [Zap, CreditCard];
 
 export default function Products() {
   const ref = useRef(null);
@@ -28,13 +28,13 @@ export default function Products() {
             Todo lo que necesitas para mover dinero y carga
           </h2>
           <p className="mt-4 text-base text-brand-gray leading-relaxed">
-            Desde pagos y créditos hasta soluciones de recogida — elimina fricción,
-            acelera la liberación de carga y mantén tus cadenas de suministro en movimiento.
+            Desde pagos hasta financiamiento — elimina fricción, acelera tus
+            operaciones y mantén tus cadenas de suministro en movimiento.
           </p>
         </motion.div>
 
         {/* Product cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {siteConfig.products.map((product, i) => {
             const Icon = productIcons[i];
             return (

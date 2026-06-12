@@ -1,6 +1,20 @@
 import { NextResponse } from 'next/server'
-import { useDb } from '@/lib/db'
+import { useDb as getDb } from '@/lib/db'
 import { getAuthUser } from '@/lib/auth'
+
+type TransactionRecord = {
+  id: string
+  userId: string
+  vendorName: string
+  vendorEmail: string | null
+  amount: number
+  currency: string
+  status: string
+  paymentMethod: string | null
+  description: string | null
+  createdAt: string
+  updatedAt: string
+}
 
 export async function GET() {
   try {
@@ -9,11 +23,11 @@ export async function GET() {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const sql = useDb()
-    const transactions: any = await sql`
+    const sql = getDb()
+    const transactions = await sql`
       SELECT * FROM "Transaction" WHERE "userId" = ${auth.userId}
       ORDER BY "createdAt" DESC LIMIT 50
-    `
+    ` as TransactionRecord[]
 
     return NextResponse.json({ transactions: Array.isArray(transactions) ? transactions : [] })
   } catch (error) {
@@ -31,10 +45,10 @@ export async function POST(request: Request) {
 
     const { vendorName, vendorEmail, amount, description, paymentMethod } = await request.json()
     if (!vendorName || !amount) {
-      return NextResponse.json({ error: 'Vendor name and amount are required' }, { status: 400 })
+      return NextResponse.json({ error: 'Proveedor y monto son obligatorios' }, { status: 400 })
     }
 
-    const sql = useDb()
+    const sql = getDb()
     const id = crypto.randomUUID()
 
     await sql`
@@ -42,7 +56,7 @@ export async function POST(request: Request) {
       VALUES (${id}, ${auth.userId}, ${vendorName}, ${vendorEmail || null}, ${parseFloat(amount)}, 'USD', 'pending', ${paymentMethod || null}, ${description || null}, NOW(), NOW())
     `
 
-    const result: any = await sql`SELECT * FROM "Transaction" WHERE id = ${id}`
+    const result = await sql`SELECT * FROM "Transaction" WHERE id = ${id}` as TransactionRecord[]
     const transaction = Array.isArray(result) && result.length > 0 ? result[0] : null
 
     return NextResponse.json({ transaction }, { status: 201 })

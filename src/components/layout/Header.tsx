@@ -19,6 +19,7 @@ export default function Header({
   const router = useRouter();
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [profileOpen, setProfileOpen] = useState(false);
   const [clientUser, setClientUser] = useState<HeaderUser | null | undefined>(
     undefined
   );
@@ -43,6 +44,7 @@ export default function Header({
     await fetch("/api/auth/logout", { method: "POST" });
     setClientUser(null);
     setMobileOpen(false);
+    setProfileOpen(false);
     router.push("/");
     router.refresh();
   }
@@ -88,13 +90,62 @@ export default function Header({
           <div className="hidden md:flex items-center gap-3">
             {user ? (
               <>
-                <Link
-                  href={siteConfig.links.dashboard}
-                  className="inline-flex items-center gap-2 text-sm font-medium text-brand-warm-dark/80 hover:text-brand-charcoal transition-colors px-4 py-2"
-                >
-                  <UserCircle size={17} />
-                  Perfil
-                </Link>
+                <div className="relative">
+                  <button
+                    type="button"
+                    onClick={() => setProfileOpen((open) => !open)}
+                    className="inline-flex items-center gap-2 text-sm font-medium text-brand-warm-dark/80 hover:text-brand-charcoal transition-colors px-4 py-2"
+                    aria-expanded={profileOpen}
+                    aria-haspopup="dialog"
+                  >
+                    <UserCircle size={17} />
+                    Perfil
+                  </button>
+                  {profileOpen && (
+                    <div className="absolute right-0 mt-3 w-80 rounded-2xl border border-brand-beige-dark/30 bg-white/95 p-5 text-left shadow-xl backdrop-blur-xl">
+                      <div className="flex items-start gap-3">
+                        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-brand-beige text-brand-near-black">
+                          <UserCircle size={24} />
+                        </div>
+                        <div>
+                          <p className="text-sm font-semibold text-brand-near-black">
+                            Perfil de cuenta
+                          </p>
+                          <p className="mt-1 break-all text-sm text-brand-gray">
+                            {user.email}
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="mt-5 space-y-3 rounded-xl bg-brand-beige-light/70 p-4">
+                        <div className="flex items-center justify-between gap-4">
+                          <span className="text-xs font-medium uppercase tracking-widest text-brand-gray">
+                            Estado
+                          </span>
+                          <span className="text-sm font-medium text-brand-near-black">
+                            Activo
+                          </span>
+                        </div>
+                        <div className="flex items-center justify-between gap-4">
+                          <span className="text-xs font-medium uppercase tracking-widest text-brand-gray">
+                            Acceso
+                          </span>
+                          <span className="text-sm font-medium text-brand-near-black">
+                            Panel ITERA
+                          </span>
+                        </div>
+                      </div>
+
+                      <Link
+                        href={siteConfig.links.dashboard}
+                        onClick={() => setProfileOpen(false)}
+                        className="mt-5 flex w-full items-center justify-center rounded-full bg-brand-near-black px-5 py-2.5 text-sm font-medium text-white transition-all hover:bg-black"
+                      >
+                        Ir al dashboard
+                      </Link>
+                    </div>
+                  )}
+                </div>
                 <button
                   type="button"
                   onClick={handleLogout}
@@ -150,13 +201,31 @@ export default function Header({
             <hr className="border-brand-beige-dark/20" />
             {user ? (
               <>
+                <div className="rounded-2xl border border-brand-beige-dark/20 bg-brand-beige-light/60 p-4">
+                  <div className="flex items-start gap-3">
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-brand-beige text-brand-near-black">
+                      <UserCircle size={22} />
+                    </div>
+                    <div>
+                      <p className="text-sm font-semibold text-brand-near-black">
+                        Perfil de cuenta
+                      </p>
+                      <p className="mt-1 break-all text-sm text-brand-gray">
+                        {user.email}
+                      </p>
+                      <p className="mt-2 text-xs font-medium uppercase tracking-widest text-brand-gray">
+                        Estado activo
+                      </p>
+                    </div>
+                  </div>
+                </div>
                 <Link
                   href={siteConfig.links.dashboard}
                   onClick={() => setMobileOpen(false)}
                   className="flex items-center gap-2 text-base font-medium text-brand-warm-dark py-2"
                 >
                   <UserCircle size={18} />
-                  Perfil
+                  Ir al dashboard
                 </Link>
                 <button
                   type="button"

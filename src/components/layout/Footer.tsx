@@ -22,7 +22,8 @@ export default function Footer() {
               </span>
             </Link>
             <p className="text-sm text-brand-gray leading-relaxed max-w-xs">
-              Pagos más inteligentes para la logística global. Un ecosistema que acelera el comercio global.
+              Pagos inteligentes para la logística. Un ecosistema que acelera
+              pagos y optimiza operaciones.
             </p>
           </div>
 
@@ -32,7 +33,7 @@ export default function Footer() {
               Productos
             </h4>
             <ul className="space-y-3">
-              {["Payments", "Access Credits", "Access Pickup Solution"].map((item) => (
+              {["Pagos", "Financiamiento"].map((item) => (
                 <li key={item}>
                   <Link href="#" className="text-sm text-brand-gray hover:text-brand-charcoal transition-colors">
                     {item}
