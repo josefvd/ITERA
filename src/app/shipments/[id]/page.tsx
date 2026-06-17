@@ -26,6 +26,7 @@ interface Invoice {
   status: string;
   issuedAt: string;
   paidAt: string | null;
+  invoiceType: string | null;
 }
 
 interface Shipment {
@@ -66,6 +67,23 @@ function getUrgencyLabel(urgency: string) {
     critical: "Crítica",
   };
   return labels[urgency] || urgency;
+}
+
+const INVOICE_TYPE_CONFIG: Record<string, { label: string; color: string; bg: string }> = {
+  freight: { label: "Flete", color: "text-blue-700", bg: "bg-blue-50 border-blue-200" },
+  taxes: { label: "Impuestos", color: "text-amber-700", bg: "bg-amber-50 border-amber-200" },
+  storage: { label: "Almacenaje", color: "text-purple-700", bg: "bg-purple-50 border-purple-200" },
+  transport: { label: "Transporte", color: "text-teal-700", bg: "bg-teal-50 border-teal-200" },
+};
+
+function getInvoiceTypeBadge(type: string | null) {
+  const config = INVOICE_TYPE_CONFIG[type || ""];
+  if (!config) return null;
+  return (
+    <span className={`text-xs font-medium px-2 py-0.5 rounded-full border ${config.color} ${config.bg}`}>
+      {config.label}
+    </span>
+  );
 }
 
 export default function ShipmentDetailPage() {
@@ -287,6 +305,36 @@ export default function ShipmentDetailPage() {
               )}
             </div>
           </div>
+
+          {invoices.length > 0 && (
+            <div className="mt-5 pt-5 border-t border-brand-beige-dark/20">
+              <p className="text-xs font-semibold uppercase tracking-wider text-brand-gray mb-3">
+                Desglose
+              </p>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                {(() => {
+                  const typeTotals: Record<string, { label: string; total: number }> = {};
+                  for (const inv of invoices) {
+                    const key = inv.invoiceType || "other";
+                    if (!typeTotals[key]) {
+                      const cfg = INVOICE_TYPE_CONFIG[key];
+                      typeTotals[key] = { label: cfg?.label || key, total: 0 };
+                    }
+                    typeTotals[key].total += inv.amount;
+                  }
+                  return Object.entries(typeTotals).map(([key, { label, total }]) => {
+                    const cfg = INVOICE_TYPE_CONFIG[key];
+                    return (
+                      <div key={key} className={`rounded-xl p-3 border ${cfg?.bg || "bg-gray-50 border-gray-200"}`}>
+                        <p className={`text-xs font-medium ${cfg?.color || "text-gray-700"}`}>{label}</p>
+                        <p className="text-sm font-bold text-brand-near-black mt-1">{formatCurrency(total)}</p>
+                      </div>
+                    );
+                  });
+                })()}
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Invoices table */}
@@ -313,6 +361,9 @@ export default function ShipmentDetailPage() {
                         Proveedor
                       </th>
                       <th className="text-left px-6 py-4 text-xs font-semibold uppercase tracking-wider text-brand-gray">
+                        Tipo
+                      </th>
+                      <th className="text-left px-6 py-4 text-xs font-semibold uppercase tracking-wider text-brand-gray">
                         Monto
                       </th>
                       <th className="text-left px-6 py-4 text-xs font-semibold uppercase tracking-wider text-brand-gray">
@@ -328,6 +379,9 @@ export default function ShipmentDetailPage() {
                       <tr key={inv.id} className="hover:bg-brand-beige/20 transition-colors">
                         <td className="px-6 py-4 text-sm font-medium text-brand-charcoal">
                           {inv.vendorName || "—"}
+                        </td>
+                        <td className="px-6 py-4">
+                          {getInvoiceTypeBadge(inv.invoiceType)}
                         </td>
                         <td className="px-6 py-4 text-sm font-semibold text-brand-near-black">
                           {formatCurrency(inv.amount)}
