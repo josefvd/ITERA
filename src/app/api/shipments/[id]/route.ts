@@ -53,11 +53,14 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
 
     const shipment = shipments[0]
     const body = await request.json().catch(() => ({}))
-    const action = body.action === 'schedule' ? 'schedule' : 'pay'
+    const action = body.action
     const paymentMethod = body.paymentMethod || null
     const invoiceIds = Array.isArray(body.invoiceIds) ? body.invoiceIds.filter((value: unknown) => typeof value === 'string') : []
     const scheduledFor = body.scheduledFor
 
+    if (action !== 'schedule') {
+      return NextResponse.json({ error: 'Payment execution is not enabled in this release. You can schedule approved obligations.' }, { status: 501 })
+    }
     if (paymentMethod && !['bank_account', 'credit_card', 'itera_credit'].includes(paymentMethod)) {
       return NextResponse.json({ error: 'Invalid payment method' }, { status: 400 })
     }
@@ -79,34 +82,10 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     }
 
     for (const invoice of selected) {
-      if (action === 'schedule') {
-        await sql`
-          UPDATE "Invoice"
-          SET status = 'scheduled', "scheduledFor" = ${scheduledFor}, "paymentMethod" = ${paymentMethod}
-          WHERE id = ${invoice.id}
-        `
-      } else {
-        await sql`
-          UPDATE "Invoice"
-          SET status = 'paid', "paidAt" = NOW(), "scheduledFor" = NULL, "paymentMethod" = ${paymentMethod}
-          WHERE id = ${invoice.id}
-        `
-      }
-    }
-
-    const remaining: any = await sql`
-      SELECT COUNT(*)::int AS count FROM "Invoice"
-      WHERE "shipmentRef" = ${shipment.reference} AND status != 'paid'
-    `
-    const hasRemaining = Array.isArray(remaining) && Number(remaining[0]?.count) > 0
-    await sql`
-      UPDATE "Shipment" SET status = ${hasRemaining ? 'pending' : 'paid'}, "updatedAt" = NOW() WHERE id = ${id}
-    `
-
-    if (action === 'pay' && !hasRemaining) {
       await sql`
-        UPDATE "Transaction" SET status = 'completed', "updatedAt" = NOW()
-        WHERE "invoiceRef" = ${shipment.reference} AND status = 'pending'
+        UPDATE "Invoice"
+        SET status = 'scheduled', "scheduledFor" = ${scheduledFor}, "paymentMethod" = ${paymentMethod}
+        WHERE id = ${invoice.id}
       `
     }
 

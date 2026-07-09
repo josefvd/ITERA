@@ -158,8 +158,8 @@ export default function ShipmentDetailPage() {
     (rule) => rule.isActive && totalAmount > rule.maxAmount
   );
 
-  const handlePayAll = async (action: "pay" | "schedule" = "pay") => {
-    if (action === "schedule" && !scheduleDate) {
+  const handleSchedule = async () => {
+    if (!scheduleDate) {
       setError("Selecciona una fecha para programar el pago.");
       return;
     }
@@ -170,11 +170,7 @@ export default function ShipmentDetailPage() {
       const res = await fetch(`/api/shipments/${id}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          action,
-          paymentMethod,
-          ...(action === "schedule" ? { scheduledFor: scheduleDate } : {}),
-        }),
+        body: JSON.stringify({ action: "schedule", paymentMethod, scheduledFor: scheduleDate }),
       });
       const data = await res.json();
       if (data.error) {
@@ -182,10 +178,10 @@ export default function ShipmentDetailPage() {
       } else {
         setShipment(data.shipment);
         setInvoices(data.invoices || []);
-        setSuccess(action === "schedule" ? "Las obligaciones revisadas fueron programadas." : "Las obligaciones revisadas han sido pagadas exitosamente.");
+        setSuccess("Las obligaciones revisadas fueron programadas para ejecución.");
       }
     } catch {
-      setError("Error al procesar el pago");
+      setError("Error al programar las obligaciones");
     } finally {
       setPaying(false);
     }
@@ -448,33 +444,21 @@ export default function ShipmentDetailPage() {
         {!isPaid && invoices.length > 0 && (
           <div className="rounded-2xl border border-brand-beige-dark/20 bg-white/60 p-5">
             <div className="mb-4">
-              <h2 className="font-semibold text-brand-near-black">Pagar obligaciones revisadas</h2>
+              <h2 className="font-semibold text-brand-near-black">Programar obligaciones revisadas</h2>
               <p className="mt-1 text-sm text-brand-gray">El método seleccionado se aplica como default al lote. Puedes cambiarlo por factura desde Facturas.</p>
             </div>
-            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            <div className="grid gap-3 sm:grid-cols-3">
               <select value={paymentMethod} onChange={(event) => setPaymentMethod(event.target.value)} className="rounded-xl border border-brand-beige-dark/40 bg-white px-3 py-3 text-sm text-brand-charcoal">
                 <option value="bank_account">Cuenta bancaria</option>
                 <option value="credit_card">Tarjeta de crédito</option>
                 <option value="itera_credit">Crédito ITERA</option>
               </select>
               <input type="date" value={scheduleDate} onChange={(event) => setScheduleDate(event.target.value)} className="rounded-xl border border-brand-beige-dark/40 bg-white px-3 py-3 text-sm text-brand-charcoal" aria-label="Fecha programada" />
-              <button onClick={() => handlePayAll("pay")} disabled={paying} className="flex items-center justify-center gap-2 rounded-xl bg-brand-near-black px-5 py-3 text-sm font-medium text-white hover:bg-black disabled:cursor-not-allowed disabled:opacity-50">
-                <CheckCircle size={18} /> {paying ? "Procesando..." : "Pagar ahora"}
-              </button>
-              <button onClick={() => handlePayAll("schedule")} disabled={paying} className="flex items-center justify-center gap-2 rounded-xl border-2 border-brand-near-black/30 px-5 py-3 text-sm font-medium text-brand-near-black hover:bg-brand-beige/30 disabled:cursor-not-allowed disabled:opacity-50">
-                <CalendarClock size={18} /> Programar
+              <button onClick={handleSchedule} disabled={paying} className="flex items-center justify-center gap-2 rounded-xl border-2 border-brand-near-black/30 px-5 py-3 text-sm font-medium text-brand-near-black hover:bg-brand-beige/30 disabled:cursor-not-allowed disabled:opacity-50">
+                <CalendarClock size={18} /> Solicitar programación
               </button>
             </div>
-            <button
-              onClick={() => {
-                setShowFinancing(true);
-                setFinancingStep("form");
-                setFinancingResult(null);
-              }}
-              className="mt-4 inline-flex items-center gap-2 text-sm font-medium text-brand-charcoal underline underline-offset-4 hover:text-black"
-            >
-              <CreditCard size={16} /> Financiar con ITERA
-            </button>
+            <p className="mt-4 text-xs text-brand-gray">La ejecución de pagos y el financiamiento no están habilitados en esta versión.</p>
           </div>
         )}
 
@@ -488,18 +472,6 @@ export default function ShipmentDetailPage() {
           </div>
         )}
 
-        {/* Pagar todas las obligaciones button */}
-        {!isPaid && invoices.length > 0 && (
-          <div className="mt-6 text-center">
-            <button
-              onClick={() => handlePayAll("pay")}
-              disabled={paying}
-              className="inline-flex items-center gap-2 text-brand-gray hover:text-brand-near-black transition-colors text-sm font-medium underline underline-offset-2"
-            >
-              Pagar todas las obligaciones
-            </button>
-          </div>
-        )}
       </div>
 
       {/* Financing side panel */}

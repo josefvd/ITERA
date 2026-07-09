@@ -4,7 +4,7 @@ import { useDb } from "@/lib/db";
 import { ensureInvoicePaymentSchema } from "@/lib/invoice-payment-schema";
 
 const paymentMethods = new Set(["bank_account", "credit_card", "itera_credit"]);
-const actions = new Set(["review", "pay", "schedule", "set_payment_method"]);
+const actions = new Set(["review", "schedule", "set_payment_method"]);
 
 export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
@@ -42,16 +42,6 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
       await sql`
         UPDATE "Invoice"
         SET status = 'pending', "reviewedAt" = NOW(), "reviewNote" = ${body.reviewNote || null}
-        WHERE id = ${id}
-      `;
-    } else if (action === "pay") {
-      if (found[0].status === "pending_review") {
-        return NextResponse.json({ error: "Review the invoice before paying it" }, { status: 409 });
-      }
-      await sql`
-        UPDATE "Invoice"
-        SET status = 'paid', "paidAt" = NOW(), "scheduledFor" = NULL,
-            "paymentMethod" = ${paymentMethod || null}
         WHERE id = ${id}
       `;
     } else if (action === "schedule") {
