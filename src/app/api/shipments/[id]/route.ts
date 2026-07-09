@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { useDb } from '@/lib/db'
+import { ensureInvoicePaymentSchema } from '@/lib/invoice-payment-schema'
 import { getAuthUser } from '@/lib/auth'
 
 export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -40,6 +41,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     }
 
     const { id } = await params
+    await ensureInvoicePaymentSchema()
     const sql = useDb()
 
     const shipments: any = await sql`
@@ -50,23 +52,42 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     }
 
     const shipment = shipments[0]
+    const body = await request.json().catch(() => ({}))
+    const action = body.action
+    const paymentMethod = body.paymentMethod || null
+    const invoiceIds = Array.isArray(body.invoiceIds) ? body.invoiceIds.filter((value: unknown) => typeof value === 'string') : []
+    const scheduledFor = body.scheduledFor
 
-    // Pay all invoices for this shipment
-    await sql`
-      UPDATE "Invoice" SET status = 'paid', "paidAt" = NOW()
-      WHERE "shipmentRef" = ${shipment.reference} AND status != 'paid'
-    `
+    if (action !== 'schedule') {
+      return NextResponse.json({ error: 'Payment execution is not enabled in this release. You can schedule approved obligations.' }, { status: 501 })
+    }
+    if (paymentMethod && !['bank_account', 'credit_card', 'itera_credit'].includes(paymentMethod)) {
+      return NextResponse.json({ error: 'Invalid payment method' }, { status: 400 })
+    }
+    if (action === 'schedule' && (!scheduledFor || Number.isNaN(Date.parse(scheduledFor)))) {
+      return NextResponse.json({ error: 'A valid scheduled payment date is required' }, { status: 400 })
+    }
 
-    // Update shipment status to paid
-    await sql`
-      UPDATE "Shipment" SET status = 'paid', "updatedAt" = NOW() WHERE id = ${id}
+    const outstanding: any = await sql`
+      SELECT id, status FROM "Invoice"
+      WHERE "shipmentRef" = ${shipment.reference} AND status NOT IN ('paid', 'pending_review')
     `
+    const candidates = Array.isArray(outstanding) ? outstanding : []
+    const selected = invoiceIds.length > 0
+      ? candidates.filter((invoice: { id: string }) => invoiceIds.includes(invoice.id))
+      : candidates
 
-    // Also update any associated transactions
-    await sql`
-      UPDATE "Transaction" SET status = 'completed', "updatedAt" = NOW()
-      WHERE "invoiceRef" = ${shipment.reference} AND status = 'pending'
-    `
+    if (selected.length === 0) {
+      return NextResponse.json({ error: 'No reviewed invoices are available for this action' }, { status: 409 })
+    }
+
+    for (const invoice of selected) {
+      await sql`
+        UPDATE "Invoice"
+        SET status = 'scheduled', "scheduledFor" = ${scheduledFor}, "paymentMethod" = ${paymentMethod}
+        WHERE id = ${invoice.id}
+      `
+    }
 
     const updated: any = await sql`SELECT * FROM "Shipment" WHERE id = ${id}`
     const updatedShipment = Array.isArray(updated) && updated.length > 0 ? updated[0] : null
