@@ -35,8 +35,8 @@ async function seed() {
   const totalAmount = invoices.reduce((s, i) => s + i.amount, 0);
 
   await sql`
-    INSERT INTO "Shipment" (id, "userId", reference, status, "totalAmount", "dueDate", urgency, "createdAt", "updatedAt")
-    VALUES (${shipmentId}, ${user.id}, ${reference}, 'pending', ${totalAmount}, ${dueDate.toISOString()}, 'normal', ${now.toISOString()}, ${now.toISOString()})
+    INSERT INTO "Shipment" (id, "userId", reference, status, "totalAmount", "dueDate", urgency, "createdAt", "updatedAt", "containerRef")
+    VALUES (${shipmentId}, ${user.id}, ${reference}, 'pending', ${totalAmount}, ${dueDate.toISOString()}, 'normal', ${now.toISOString()}, ${now.toISOString()}, 'MAEU1234567')
   `;
   console.log(`✅ Shipment created: ${reference} ($${totalAmount})`);
 

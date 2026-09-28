@@ -33,6 +33,7 @@ interface Invoice {
 interface Shipment {
   id: string;
   reference: string;
+  containerRef?: string | null;
   totalAmount: number;
   status: string;
   dueDate: string | null;
@@ -295,6 +296,11 @@ export default function ShipmentDetailPage() {
                 </h1>
                 <p className="text-brand-gray text-sm mt-1">
                   Creado el {shipment?.createdAt ? formatDate(shipment.createdAt) : "—"}
+                  {shipment?.containerRef && (
+                    <span className="ml-2 inline-flex items-center gap-1 text-xs font-medium bg-brand-beige/60 text-brand-warm-dark px-2 py-0.5 rounded-md">
+                      <Ship size={11} /> Contenedor {shipment.containerRef}
+                    </span>
+                  )}
                 </p>
               </div>
             </div>

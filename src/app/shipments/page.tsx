@@ -18,6 +18,7 @@ import { formatCurrency, formatDate, getStatusColor } from "@/lib/utils";
 interface Shipment {
   id: string;
   reference: string;
+  containerRef?: string | null;
   totalAmount: number;
   status: string;
   dueDate: string | null;
@@ -159,6 +160,9 @@ export default function ShipmentsPage() {
                       Referencia
                     </th>
                     <th className="text-left px-6 py-4 text-xs font-semibold uppercase tracking-wider text-brand-gray">
+                      Contenedor
+                    </th>
+                    <th className="text-left px-6 py-4 text-xs font-semibold uppercase tracking-wider text-brand-gray">
                       Monto
                     </th>
                     <th className="text-left px-6 py-4 text-xs font-semibold uppercase tracking-wider text-brand-gray">
@@ -192,6 +196,15 @@ export default function ShipmentsPage() {
                         <p className="font-medium text-brand-charcoal text-sm">
                           {s.reference}
                         </p>
+                      </td>
+                      <td className="px-6 py-4">
+                        {s.containerRef ? (
+                          <span className="text-xs font-medium bg-brand-beige/50 text-brand-charcoal px-2 py-1 rounded-md">
+                            {s.containerRef}
+                          </span>
+                        ) : (
+                          <span className="text-brand-taupe text-sm">—</span>
+                        )}
                       </td>
                       <td className="px-6 py-4">
                         <span className="font-semibold text-brand-near-black text-sm">

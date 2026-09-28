@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, FormEvent } from "react";
+import { useState, useRef, FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import {
   ArrowLeft,
@@ -35,6 +35,51 @@ export default function NewTransactionPage() {
   });
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [ocrRunning, setOcrRunning] = useState(false);
+  const [ocrResult, setOcrResult] = useState<{
+    confidence: number;
+    source: string;
+    message?: string;
+  } | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  async function handleOcrFile(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setError("");
+    setOcrRunning(true);
+    setOcrResult(null);
+    try {
+      const fd = new FormData();
+      fd.append("file", file);
+      fd.append("source", "uploaded_image");
+      const res = await fetch("/api/ocr/parse", { method: "POST", body: fd });
+      const data = await res.json();
+      if (data.error) {
+        setError(data.error);
+        return;
+      }
+      const ex = data.extracted;
+      // Auto-populate fields from OCR result
+      setForm((prev) => ({
+        ...prev,
+        vendorName: ex.vendorName || prev.vendorName,
+        amount: ex.amount ? String(ex.amount) : prev.amount,
+        paymentDate: ex.dueDate || prev.paymentDate,
+        attachmentName: file.name,
+      }));
+      setOcrResult({
+        confidence: ex.confidence,
+        source: ex.source,
+        message: ex.rawText,
+      });
+    } catch {
+      setError("Error al procesar la factura");
+    } finally {
+      setOcrRunning(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  }
 
   async function handleSubmit(e: FormEvent, approveNow = false) {
     e.preventDefault();
@@ -358,19 +403,44 @@ export default function NewTransactionPage() {
                         Factura o documento comercial
                       </p>
                       <p className="mt-1 text-xs leading-relaxed text-brand-gray">
-                        Por ahora registra el nombre del archivo. En el próximo
-                        paso conectaremos carga real de adjuntos.
+                        Sube una foto de la factura y ITERA auto-llenará los
+                        campos con reconocimiento OCR.
                       </p>
                     </div>
                   </div>
-                  <Field
-                    id="attachmentName"
-                    label="Nombre del archivo"
-                    value={form.attachmentName}
-                    onChange={updateField("attachmentName")}
-                    placeholder="factura-123.pdf"
-                  />
+                  <div className="flex flex-col gap-2">
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept="image/*,.pdf"
+                      onChange={handleOcrFile}
+                      className="hidden"
+                      id="ocr-file"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => fileInputRef.current?.click()}
+                      disabled={ocrRunning}
+                      className="inline-flex items-center justify-center gap-2 rounded-xl bg-brand-near-black text-white px-4 py-2 text-sm font-medium hover:bg-black transition-all disabled:opacity-50"
+                    >
+                      {ocrRunning ? "Procesando..." : "Subir foto de factura"}
+                    </button>
+                    {form.attachmentName && !ocrRunning && (
+                      <span className="text-xs text-brand-gray text-center">
+                        {form.attachmentName}
+                      </span>
+                    )}
+                  </div>
                 </div>
+                {ocrResult && (
+                  <div className="mt-3 flex items-center gap-2 rounded-xl bg-green-50 border border-green-200 px-4 py-2.5 text-sm text-green-700">
+                    <CheckCircle2 size={16} />
+                    <span>
+                      Factura leída ({Math.round(ocrResult.confidence * 100)}%
+                      confianza) — campos auto-llenados.
+                    </span>
+                  </div>
+                )}
               </div>
             </section>
           </div>
