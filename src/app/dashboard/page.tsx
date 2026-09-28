@@ -37,10 +37,29 @@ interface Shipment {
   createdAt: string;
 }
 
+interface AlertItem {
+  id: string;
+  invoiceNumber: string;
+  shipmentRef: string | null;
+  vendorName: string;
+  amount: number;
+  currency: string;
+  dueDate: string;
+  scheduledFor: string | null;
+  status: string;
+  daysLeft: number;
+  scheduleOverdueDays?: number;
+}
+
 export default function DashboardPage() {
   const router = useRouter();
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [shipments, setShipments] = useState<Shipment[]>([]);
+  const [alerts, setAlerts] = useState<{
+    overdue: AlertItem[];
+    dueSoon: AlertItem[];
+    scheduledDue: AlertItem[];
+  }>({ overdue: [], dueSoon: [], scheduledDue: [] });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -48,21 +67,29 @@ export default function DashboardPage() {
     Promise.all([
       fetch("/api/transactions"),
       fetch("/api/shipments"),
+      fetch("/api/alerts?days=7"),
     ])
-      .then(([txRes, shipRes]) => {
+      .then(([txRes, shipRes, alertRes]) => {
         if (txRes.status === 401) {
           router.push("/signin");
           return null;
         }
-        return Promise.all([txRes.json(), shipRes.json()]);
+        return Promise.all([txRes.json(), shipRes.json(), alertRes.json()]);
       })
       .then((data) => {
         if (data) {
-          const [txData, shipData] = data;
+          const [txData, shipData, alertData] = data;
           if (txData.error) setError(txData.error);
           else setTransactions(txData.transactions || []);
           if (shipData.error) setError(shipData.error);
           else setShipments(shipData.shipments || []);
+          if (alertData.error) setError(alertData.error);
+          else
+            setAlerts({
+              overdue: alertData.overdue || [],
+              dueSoon: alertData.dueSoon || [],
+              scheduledDue: alertData.scheduledDue || [],
+            });
         }
       })
       .catch(() => setError("Error al cargar el dashboard"))
@@ -225,6 +252,16 @@ export default function DashboardPage() {
             detail="Obligaciones agrupadas"
           />
         </div>
+
+        {(alerts.overdue.length > 0 ||
+          alerts.dueSoon.length > 0 ||
+          alerts.scheduledDue.length > 0) && (
+          <AlertsPanel
+            overdue={alerts.overdue}
+            dueSoon={alerts.dueSoon}
+            scheduledDue={alerts.scheduledDue}
+          />
+        )}
 
         <div className="mb-6 grid gap-6 lg:grid-cols-[0.95fr_1.05fr]">
           <section className="rounded-3xl border border-brand-beige-dark/20 bg-white/65 p-6 shadow-xl backdrop-blur-xl">
@@ -553,6 +590,129 @@ function EmptyState({
       >
         {actionLabel}
       </Link>
+    </div>
+  );
+}
+
+function AlertsPanel({
+  overdue,
+  dueSoon,
+  scheduledDue,
+}: {
+  overdue: AlertItem[];
+  dueSoon: AlertItem[];
+  scheduledDue: AlertItem[];
+}) {
+  const total = overdue.length + dueSoon.length + scheduledDue.length;
+  const hasOverdue = overdue.length > 0;
+  return (
+    <section
+      className={`mb-6 rounded-3xl border p-6 shadow-xl backdrop-blur-xl ${
+        hasOverdue
+          ? "border-red-200 bg-red-50/80"
+          : "border-amber-200 bg-amber-50/80"
+      }`}
+    >
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <span
+            className={`text-xs font-semibold uppercase tracking-widest ${
+              hasOverdue ? "text-red-700" : "text-amber-700"
+            }`}
+          >
+            Alertas de vencimiento
+          </span>
+          <h2 className="mt-2 text-xl font-semibold text-brand-near-black">
+            {total} factura{total === 1 ? "" : "s"} requieren atención
+          </h2>
+          <p className="mt-1 text-sm text-brand-gray">
+            Pagos vencidos, próximos a vencer o programados por ejecutarse.
+          </p>
+        </div>
+        <div
+          className={`rounded-2xl p-3 ${
+            hasOverdue ? "bg-red-100 text-red-700" : "bg-amber-100 text-amber-700"
+          }`}
+        >
+          <Clock size={22} />
+        </div>
+      </div>
+
+      <div className="mt-5 grid gap-3 md:grid-cols-3">
+        <AlertGroup
+          title="Vencidas"
+          count={overdue.length}
+          tone="red"
+          items={overdue}
+        />
+        <AlertGroup
+          title="Próximas a vencer"
+          count={dueSoon.length}
+          tone="amber"
+          items={dueSoon}
+        />
+        <AlertGroup
+          title="Pagos programados por ejecutar"
+          count={scheduledDue.length}
+          tone="blue"
+          items={scheduledDue}
+        />
+      </div>
+    </section>
+  );
+}
+
+function AlertGroup({
+  title,
+  count,
+  tone,
+  items,
+}: {
+  title: string;
+  count: number;
+  tone: "red" | "amber" | "blue";
+  items: AlertItem[];
+}) {
+  const tones = {
+    red: "bg-red-100 text-red-700",
+    amber: "bg-amber-100 text-amber-700",
+    blue: "bg-blue-100 text-blue-700",
+  };
+  return (
+    <div className="rounded-2xl border border-brand-beige-dark/20 bg-white/80 p-4">
+      <div className="flex items-center justify-between">
+        <p className="text-sm font-semibold text-brand-charcoal">{title}</p>
+        <span className={`rounded-full px-2 py-0.5 text-xs font-bold ${tones[tone]}`}>
+          {count}
+        </span>
+      </div>
+      <div className="mt-3 space-y-2">
+        {items.length === 0 ? (
+          <p className="text-xs text-brand-gray">Ninguno</p>
+        ) : (
+          items.slice(0, 3).map((item) => (
+            <div
+              key={item.id}
+              className="flex items-center justify-between gap-2 rounded-xl bg-brand-beige/40 px-3 py-2"
+            >
+              <div className="min-w-0">
+                <p className="truncate text-xs font-medium text-brand-charcoal">
+                  {item.vendorName}
+                </p>
+                <p className="truncate text-[11px] text-brand-gray">
+                  {item.invoiceNumber}
+                  {item.daysLeft < 0
+                    ? ` · vencida hace ${Math.abs(item.daysLeft)}d`
+                    : ` · vence en ${item.daysLeft}d`}
+                </p>
+              </div>
+              <p className="shrink-0 text-xs font-semibold text-brand-near-black">
+                {formatCurrency(item.amount)}
+              </p>
+            </div>
+          ))
+        )}
+      </div>
     </div>
   );
 }
