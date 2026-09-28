@@ -1,9 +1,19 @@
 "use client";
 
-import { useState, useEffect, FormEvent } from "react";
+import { useState, useEffect, FormEvent, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, Building2, CreditCard, Plus, Trash2 } from "lucide-react";
+import { ArrowLeft, Building2, CreditCard, Plus, Trash2, CheckCircle2 } from "lucide-react";
+
+interface PaymentMethod {
+  id: string;
+  type: string;
+  provider: string;
+  cardLast4: string | null;
+  cardBrand: string | null;
+  cardExpiry: string | null;
+  isDefault: boolean;
+}
 
 interface BankAccount {
   id: string;
@@ -14,61 +24,161 @@ interface BankAccount {
   isVerified: boolean;
 }
 
+const EL_SALVADOR_BANKS = [
+  "Banco Agrícola",
+  "Banco Cuscatlán",
+  "Banco G&T Continental",
+  "Banco Promerica",
+  "Banco Davivienda",
+  "BAC Credomatic",
+  "Banco de Fomento Agropecuario",
+  "Banco Hipotecario",
+  "Banco Azul",
+  "Cuscatlán TBI",
+];
+
 export default function BankingPage() {
   const router = useRouter();
   const [accounts, setAccounts] = useState<BankAccount[]>([]);
+  const [methods, setMethods] = useState<PaymentMethod[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [showForm, setShowForm] = useState(false);
-  const [form, setForm] = useState({
-    accountType: "checking",
-    bankName: "",
+
+  // Card form
+  const [showCardForm, setShowCardForm] = useState(false);
+  const [cardForm, setCardForm] = useState({
+    cardNumber: "",
+    cardHolder: "",
+    expiry: "",
+    cvc: "",
+    makeDefault: false,
+  });
+
+  // Bank form
+  const [showBankForm, setShowBankForm] = useState(false);
+  const [bankForm, setBankForm] = useState({
+    bankName: EL_SALVADOR_BANKS[0],
     accountNumber: "",
     routingNumber: "",
+    accountHolder: "",
+    accountType: "checking",
   });
+
   const [saving, setSaving] = useState(false);
 
-  useEffect(() => {
-    fetch("/api/transactions")
-      .then((res) => {
-        if (res.status === 401) {
-          router.push("/signin");
-          return null;
-        }
-        setLoading(false);
-        return null;
-      })
-      .catch(() => {
-        setError("Error al cargar información bancaria");
-        setLoading(false);
-      });
+  const loadData = useCallback(async () => {
+    try {
+      const [accRes, methRes] = await Promise.all([
+        fetch("/api/bank-accounts"),
+        fetch("/api/payment-methods"),
+      ]);
+      if (accRes.status === 401 || methRes.status === 401) {
+        router.push("/signin");
+        return;
+      }
+      const accData = await accRes.json();
+      const methData = await methRes.json();
+      if (accData.error) setError(accData.error);
+      else setAccounts(accData.accounts || []);
+      if (!methData.error) setMethods(methData.methods || []);
+    } catch {
+      setError("Error al cargar información bancaria");
+    } finally {
+      setLoading(false);
+    }
   }, [router]);
 
-  async function handleAddAccount(e: FormEvent) {
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
+
+  async function handleAddCard(e: FormEvent) {
     e.preventDefault();
     setError("");
     setSaving(true);
-
-    const newAccount: BankAccount = {
-      id: crypto.randomUUID(),
-      accountType: form.accountType,
-      bankName: form.bankName || null,
-      accountNumber: form.accountNumber
-        ? `****${form.accountNumber.slice(-4)}`
-        : null,
-      routingNumber: form.routingNumber || null,
-      isVerified: false,
-    };
-
-    setAccounts((prev) => [...prev, newAccount]);
-    setShowForm(false);
-    setForm({ accountType: "checking", bankName: "", accountNumber: "", routingNumber: "" });
-    setSaving(false);
+    try {
+      const res = await fetch("/api/payment-methods", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(cardForm),
+      });
+      const data = await res.json();
+      if (data.error) {
+        setError(data.error);
+      } else {
+        setMethods((prev) => [...prev, data.method]);
+        setShowCardForm(false);
+        setCardForm({ cardNumber: "", cardHolder: "", expiry: "", cvc: "", makeDefault: false });
+      }
+    } catch {
+      setError("Error al guardar tarjeta");
+    } finally {
+      setSaving(false);
+    }
   }
 
-  const updateField = (field: string) => (
+  async function handleRemoveCard(id: string) {
+    setError("");
+    try {
+      const res = await fetch(`/api/payment-methods/${id}`, { method: "DELETE" });
+      const data = await res.json();
+      if (data.error) setError(data.error);
+      else setMethods((prev) => prev.filter((m) => m.id !== id));
+    } catch {
+      setError("Error al eliminar tarjeta");
+    }
+  }
+
+  async function handleAddBank(e: FormEvent) {
+    e.preventDefault();
+    setError("");
+    setSaving(true);
+    try {
+      const res = await fetch("/api/bank-accounts", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(bankForm),
+      });
+      const data = await res.json();
+      if (data.error) {
+        setError(data.error);
+      } else {
+        setAccounts((prev) => [...prev, data.account]);
+        setShowBankForm(false);
+        setBankForm({
+          bankName: EL_SALVADOR_BANKS[0],
+          accountNumber: "",
+          routingNumber: "",
+          accountHolder: "",
+          accountType: "checking",
+        });
+      }
+    } catch {
+      setError("Error al vincular cuenta bancaria");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function handleRemoveBank(id: string) {
+    setError("");
+    try {
+      const res = await fetch(`/api/bank-accounts/${id}`, { method: "DELETE" });
+      const data = await res.json();
+      if (data.error) setError(data.error);
+      else setAccounts((prev) => prev.filter((a) => a.id !== id));
+    } catch {
+      setError("Error al eliminar cuenta");
+    }
+  }
+
+  const updateCard = (field: string) => (
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => setCardForm((prev) => ({ ...prev, [field]: e.target.value }));
+
+  const updateBank = (field: string) => (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
-  ) => setForm((prev) => ({ ...prev, [field]: e.target.value }));
+  ) => setBankForm((prev) => ({ ...prev, [field]: e.target.value }));
 
   if (loading) {
     return (
@@ -81,7 +191,6 @@ export default function BankingPage() {
   return (
     <div className="min-h-screen pt-24 pb-16">
       <div className="mx-auto max-w-3xl px-6 lg:px-8">
-        {/* Back link */}
         <Link
           href="/dashboard"
           className="inline-flex items-center gap-1.5 text-sm font-medium text-brand-gray hover:text-brand-charcoal mb-6 transition-colors"
@@ -96,16 +205,9 @@ export default function BankingPage() {
               Configuración bancaria
             </h1>
             <p className="text-brand-gray mt-1">
-              Gestiona tus cuentas bancarias y métodos de pago
+              Gestiona tus tarjetas y cuentas bancarias de El Salvador
             </p>
           </div>
-          <button
-            onClick={() => setShowForm(!showForm)}
-            className="flex items-center gap-2 rounded-xl bg-brand-near-black text-white px-5 py-2.5 font-medium hover:bg-black transition-all text-sm"
-          >
-            <Plus size={16} />
-            Agregar cuenta
-          </button>
         </div>
 
         {error && (
@@ -114,155 +216,295 @@ export default function BankingPage() {
           </div>
         )}
 
-        {/* Add account form */}
-        {showForm && (
-          <div className="bg-white/60 backdrop-blur-xl rounded-2xl border border-brand-beige-dark/20 p-6 mb-6 shadow-sm">
-            <h2 className="text-lg font-semibold text-brand-near-black mb-4">
-              Agregar cuenta bancaria
+        {/* ===== TARJETAS ===== */}
+        <div className="mb-8">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-xl font-semibold text-brand-near-black flex items-center gap-2">
+              <CreditCard size={20} /> Tarjetas de débito y crédito
             </h2>
-            <form onSubmit={handleAddAccount} className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-brand-warm-dark mb-1.5">
-                  Tipo de cuenta
-                </label>
-                <select
-                  value={form.accountType}
-                  onChange={updateField("accountType")}
-                  className="w-full rounded-xl border border-brand-beige-dark/30 bg-white px-4 py-2.5 text-brand-charcoal focus:outline-none focus:ring-2 focus:ring-brand-near-black/20"
-                >
-                  <option value="checking">Corriente</option>
-                  <option value="prepaid">Tarjeta prepago</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-brand-warm-dark mb-1.5">
-                  Nombre del banco
-                </label>
-                <input
-                  type="text"
-                  value={form.bankName}
-                  onChange={updateField("bankName")}
-                  className="w-full rounded-xl border border-brand-beige-dark/30 bg-white px-4 py-2.5 text-brand-charcoal placeholder:text-brand-taupe focus:outline-none focus:ring-2 focus:ring-brand-near-black/20"
-                  placeholder="Banco Pichincha, Produbanco, etc."
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-brand-warm-dark mb-1.5">
-                    Número de cuenta
-                  </label>
-                  <input
-                    type="text"
-                    value={form.accountNumber}
-                    onChange={updateField("accountNumber")}
-                    className="w-full rounded-xl border border-brand-beige-dark/30 bg-white px-4 py-2.5 text-brand-charcoal placeholder:text-brand-taupe focus:outline-none focus:ring-2 focus:ring-brand-near-black/20"
-                    placeholder="000123456789"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-brand-warm-dark mb-1.5">
-                    Número de ruta
-                  </label>
-                  <input
-                    type="text"
-                    value={form.routingNumber}
-                    onChange={updateField("routingNumber")}
-                    className="w-full rounded-xl border border-brand-beige-dark/30 bg-white px-4 py-2.5 text-brand-charcoal placeholder:text-brand-taupe focus:outline-none focus:ring-2 focus:ring-brand-near-black/20"
-                    placeholder="021000021"
-                  />
-                </div>
-              </div>
-
-              <div className="flex gap-3 pt-2">
-                <button
-                  type="submit"
-                  disabled={saving}
-                  className="flex items-center gap-2 rounded-xl bg-brand-near-black text-white px-5 py-2.5 font-medium hover:bg-black transition-all text-sm disabled:opacity-50"
-                >
-                  {saving ? "Guardando..." : "Guardar cuenta"}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setShowForm(false)}
-                  className="rounded-xl border border-brand-beige-dark/30 px-5 py-2.5 text-brand-gray font-medium hover:text-brand-charcoal transition-all text-sm"
-                >
-                  Cancelar
-                </button>
-              </div>
-            </form>
+            <button
+              onClick={() => setShowCardForm(!showCardForm)}
+              className="flex items-center gap-2 rounded-xl bg-brand-near-black text-white px-4 py-2 font-medium hover:bg-black transition-all text-sm"
+            >
+              <Plus size={16} /> Agregar tarjeta
+            </button>
           </div>
-        )}
 
-        {/* Account list */}
-        {accounts.length === 0 && !showForm ? (
-          <div className="bg-white/60 backdrop-blur-xl rounded-2xl border border-brand-beige-dark/20 shadow-sm">
-            <div className="px-6 py-20 text-center">
-              <div className="rounded-full bg-brand-beige w-16 h-16 flex items-center justify-center mx-auto mb-4">
-                <Building2 size={28} className="text-brand-near-black" />
-              </div>
-              <h3 className="text-lg font-semibold text-brand-near-black mb-2">
-                Sin cuentas bancarias vinculadas
+          {showCardForm && (
+            <div className="bg-white/60 backdrop-blur-xl rounded-2xl border border-brand-beige-dark/20 p-6 mb-4 shadow-sm">
+              <h3 className="text-lg font-semibold text-brand-near-black mb-4">
+                Nueva tarjeta
               </h3>
-              <p className="text-brand-gray mb-6 max-w-md mx-auto">
-                Agrega una cuenta bancaria o tarjeta prepago para comenzar a hacer pagos.
-              </p>
-              <button
-                onClick={() => setShowForm(true)}
-                className="inline-flex items-center gap-2 rounded-xl bg-brand-near-black text-white px-6 py-2.5 font-medium hover:bg-black transition-all text-sm"
-              >
-                <Plus size={16} />
-                Agregar cuenta bancaria
-              </button>
-            </div>
-          </div>
-        ) : (
-          <div className="space-y-4">
-            {accounts.map((account) => (
-              <div
-                key={account.id}
-                className="bg-white/60 backdrop-blur-xl rounded-2xl border border-brand-beige-dark/20 p-6 shadow-sm flex items-center justify-between"
-              >
-                <div className="flex items-center gap-4">
-                  <div className="rounded-xl bg-brand-beige p-3">
-                    {account.accountType === "prepaid" ? (
-                      <CreditCard size={20} className="text-brand-near-black" />
-                    ) : (
-                      <Building2 size={20} className="text-brand-near-black" />
-                    )}
+              <form onSubmit={handleAddCard} className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-brand-warm-dark mb-1.5">
+                    Número de tarjeta
+                  </label>
+                  <input
+                    type="text"
+                    value={cardForm.cardNumber}
+                    onChange={updateCard("cardNumber")}
+                    placeholder="4242 4242 4242 4242"
+                    className="w-full rounded-xl border border-brand-beige-dark/30 bg-white px-4 py-2.5 text-brand-charcoal placeholder:text-brand-taupe focus:outline-none focus:ring-2 focus:ring-brand-near-black/20"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-brand-warm-dark mb-1.5">
+                    Titular
+                  </label>
+                  <input
+                    type="text"
+                    value={cardForm.cardHolder}
+                    onChange={updateCard("cardHolder")}
+                    placeholder="Nombre en la tarjeta"
+                    className="w-full rounded-xl border border-brand-beige-dark/30 bg-white px-4 py-2.5 text-brand-charcoal placeholder:text-brand-taupe focus:outline-none focus:ring-2 focus:ring-brand-near-black/20"
+                    required
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-brand-warm-dark mb-1.5">
+                      Vencimiento (MM/AA)
+                    </label>
+                    <input
+                      type="text"
+                      value={cardForm.expiry}
+                      onChange={updateCard("expiry")}
+                      placeholder="12/27"
+                      className="w-full rounded-xl border border-brand-beige-dark/30 bg-white px-4 py-2.5 text-brand-charcoal placeholder:text-brand-taupe focus:outline-none focus:ring-2 focus:ring-brand-near-black/20"
+                      required
+                    />
                   </div>
                   <div>
-                    <p className="font-semibold text-brand-charcoal capitalize">
-                      {account.accountType === "prepaid" ? "Prepago" : "Corriente"}
-                    </p>
-                    <p className="text-sm text-brand-gray">
-                      {account.bankName || "Banco"}
-                      {account.accountNumber
-                        ? ` • ${account.accountNumber}`
-                        : ""}
-                    </p>
-                    <span
-                      className={`text-xs font-medium mt-1 inline-block ${
-                        account.isVerified
-                          ? "text-green-600"
-                          : "text-yellow-600"
-                      }`}
-                    >
-                      {account.isVerified ? "Verificada" : "Pendiente de verificación"}
-                    </span>
+                    <label className="block text-sm font-medium text-brand-warm-dark mb-1.5">
+                      CVC
+                    </label>
+                    <input
+                      type="text"
+                      value={cardForm.cvc}
+                      onChange={updateCard("cvc")}
+                      placeholder="123"
+                      className="w-full rounded-xl border border-brand-beige-dark/30 bg-white px-4 py-2.5 text-brand-charcoal placeholder:text-brand-taupe focus:outline-none focus:ring-2 focus:ring-brand-near-black/20"
+                      required
+                    />
                   </div>
                 </div>
-                <button
-                  className="p-2 text-brand-gray hover:text-red-500 transition-colors"
-                  aria-label="Eliminar cuenta"
+                <label className="flex items-center gap-2 text-sm text-brand-warm-dark">
+                  <input
+                    type="checkbox"
+                    checked={cardForm.makeDefault}
+                    onChange={(e) => setCardForm((p) => ({ ...p, makeDefault: e.target.checked }))}
+                    className="rounded border-brand-beige-dark/30"
+                  />
+                  Establecer como método de pago predeterminado
+                </label>
+                <div className="flex gap-3 pt-2">
+                  <button
+                    type="submit"
+                    disabled={saving}
+                    className="flex items-center gap-2 rounded-xl bg-brand-near-black text-white px-5 py-2.5 font-medium hover:bg-black transition-all text-sm disabled:opacity-50"
+                  >
+                    {saving ? "Guardando..." : "Guardar tarjeta"}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setShowCardForm(false)}
+                    className="rounded-xl border border-brand-beige-dark/30 px-5 py-2.5 text-brand-gray font-medium hover:text-brand-charcoal transition-all text-sm"
+                  >
+                    Cancelar
+                  </button>
+                </div>
+              </form>
+            </div>
+          )}
+
+          {methods.length === 0 && !showCardForm ? (
+            <div className="bg-white/60 backdrop-blur-xl rounded-2xl border border-brand-beige-dark/20 p-6 text-center text-brand-gray text-sm">
+              No hay tarjetas agregadas.
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {methods.map((m) => (
+                <div
+                  key={m.id}
+                  className="bg-white/60 backdrop-blur-xl rounded-2xl border border-brand-beige-dark/20 p-4 shadow-sm flex items-center justify-between"
                 >
-                  <Trash2 size={16} />
-                </button>
-              </div>
-            ))}
+                  <div className="flex items-center gap-3">
+                    <div className="rounded-lg bg-brand-beige p-2.5">
+                      <CreditCard size={18} className="text-brand-near-black" />
+                    </div>
+                    <div>
+                      <p className="font-semibold text-brand-charcoal text-sm">
+                        {m.cardBrand || "Tarjeta"} •••• {m.cardLast4}
+                        {m.isDefault && (
+                          <span className="ml-2 text-xs font-medium text-green-600">Predeterminada</span>
+                        )}
+                      </p>
+                      <p className="text-xs text-brand-gray">Vence {m.cardExpiry || "—"}</p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => handleRemoveCard(m.id)}
+                    className="p-2 text-brand-gray hover:text-red-500 transition-colors"
+                    aria-label="Eliminar tarjeta"
+                  >
+                    <Trash2 size={16} />
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* ===== CUENTAS BANCARIAS ===== */}
+        <div>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-xl font-semibold text-brand-near-black flex items-center gap-2">
+              <Building2 size={20} /> Cuentas bancarias de El Salvador
+            </h2>
+            <button
+              onClick={() => setShowBankForm(!showBankForm)}
+              className="flex items-center gap-2 rounded-xl bg-brand-near-black text-white px-4 py-2 font-medium hover:bg-black transition-all text-sm"
+            >
+              <Plus size={16} /> Vincular cuenta
+            </button>
           </div>
-        )}
+
+          {showBankForm && (
+            <div className="bg-white/60 backdrop-blur-xl rounded-2xl border border-brand-beige-dark/20 p-6 mb-4 shadow-sm">
+              <h3 className="text-lg font-semibold text-brand-near-black mb-4">
+                Vincular cuenta bancaria
+              </h3>
+              <form onSubmit={handleAddBank} className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-brand-warm-dark mb-1.5">
+                    Banco
+                  </label>
+                  <select
+                    value={bankForm.bankName}
+                    onChange={updateBank("bankName")}
+                    className="w-full rounded-xl border border-brand-beige-dark/30 bg-white px-4 py-2.5 text-brand-charcoal focus:outline-none focus:ring-2 focus:ring-brand-near-black/20"
+                  >
+                    {EL_SALVADOR_BANKS.map((b) => (
+                      <option key={b} value={b}>{b}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-brand-warm-dark mb-1.5">
+                    Titular de la cuenta
+                  </label>
+                  <input
+                    type="text"
+                    value={bankForm.accountHolder}
+                    onChange={updateBank("accountHolder")}
+                    placeholder="Nombre del titular"
+                    className="w-full rounded-xl border border-brand-beige-dark/30 bg-white px-4 py-2.5 text-brand-charcoal placeholder:text-brand-taupe focus:outline-none focus:ring-2 focus:ring-brand-near-black/20"
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-brand-warm-dark mb-1.5">
+                      Número de cuenta
+                    </label>
+                    <input
+                      type="text"
+                      value={bankForm.accountNumber}
+                      onChange={updateBank("accountNumber")}
+                      placeholder="000123456789"
+                      className="w-full rounded-xl border border-brand-beige-dark/30 bg-white px-4 py-2.5 text-brand-charcoal placeholder:text-brand-taupe focus:outline-none focus:ring-2 focus:ring-brand-near-black/20"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-brand-warm-dark mb-1.5">
+                      Número de ruta (opcional)
+                    </label>
+                    <input
+                      type="text"
+                      value={bankForm.routingNumber}
+                      onChange={updateBank("routingNumber")}
+                      placeholder="021000021"
+                      className="w-full rounded-xl border border-brand-beige-dark/30 bg-white px-4 py-2.5 text-brand-charcoal placeholder:text-brand-taupe focus:outline-none focus:ring-2 focus:ring-brand-near-black/20"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-brand-warm-dark mb-1.5">
+                    Tipo de cuenta
+                  </label>
+                  <select
+                    value={bankForm.accountType}
+                    onChange={updateBank("accountType")}
+                    className="w-full rounded-xl border border-brand-beige-dark/30 bg-white px-4 py-2.5 text-brand-charcoal focus:outline-none focus:ring-2 focus:ring-brand-near-black/20"
+                  >
+                    <option value="checking">Corriente</option>
+                    <option value="savings">Ahorro</option>
+                  </select>
+                </div>
+                <div className="flex gap-3 pt-2">
+                  <button
+                    type="submit"
+                    disabled={saving}
+                    className="flex items-center gap-2 rounded-xl bg-brand-near-black text-white px-5 py-2.5 font-medium hover:bg-black transition-all text-sm disabled:opacity-50"
+                  >
+                    {saving ? "Vinculando..." : "Vincular cuenta"}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setShowBankForm(false)}
+                    className="rounded-xl border border-brand-beige-dark/30 px-5 py-2.5 text-brand-gray font-medium hover:text-brand-charcoal transition-all text-sm"
+                  >
+                    Cancelar
+                  </button>
+                </div>
+              </form>
+            </div>
+          )}
+
+          {accounts.length === 0 && !showBankForm ? (
+            <div className="bg-white/60 backdrop-blur-xl rounded-2xl border border-brand-beige-dark/20 p-6 text-center text-brand-gray text-sm">
+              No hay cuentas bancarias vinculadas.
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {accounts.map((account) => (
+                <div
+                  key={account.id}
+                  className="bg-white/60 backdrop-blur-xl rounded-2xl border border-brand-beige-dark/20 p-4 shadow-sm flex items-center justify-between"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="rounded-lg bg-brand-beige p-2.5">
+                      <Building2 size={18} className="text-brand-near-black" />
+                    </div>
+                    <div>
+                      <p className="font-semibold text-brand-charcoal text-sm">
+                        {account.bankName || "Banco"}
+                        {account.accountNumber ? ` • ${account.accountNumber}` : ""}
+                      </p>
+                      <span
+                        className={`text-xs font-medium inline-flex items-center gap-1 ${
+                          account.isVerified ? "text-green-600" : "text-yellow-600"
+                        }`}
+                      >
+                        {account.isVerified && <CheckCircle2 size={12} />}
+                        {account.isVerified ? "Verificada" : "Pendiente de verificación"}
+                      </span>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => handleRemoveBank(account.id)}
+                    className="p-2 text-brand-gray hover:text-red-500 transition-colors"
+                    aria-label="Eliminar cuenta"
+                  >
+                    <Trash2 size={16} />
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
