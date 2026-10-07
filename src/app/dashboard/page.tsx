@@ -21,7 +21,7 @@ import { formatCurrency, formatDate, getStatusColor } from "@/lib/utils";
 interface Transaction {
   id: string;
   vendorName: string;
-  amount: number;
+  amount: number | string;
   status: string;
   paymentMethod: string | null;
   createdAt: string;
@@ -42,7 +42,7 @@ interface AlertItem {
   invoiceNumber: string;
   shipmentRef: string | null;
   vendorName: string;
-  amount: number;
+  amount: number | string;
   currency: string;
   dueDate: string;
   scheduledFor: string | null;
@@ -97,15 +97,15 @@ export default function DashboardPage() {
   }, [router]);
 
   const totalBalance = transactions.reduce(
-    (sum, t) => (t.status === "completed" ? sum + t.amount : sum),
+    (sum, t) => (t.status === "completed" || t.status === "paid" ? sum + Number(t.amount) : sum),
     0
   );
   const pendingTotal = transactions.reduce(
-    (sum, t) => (t.status === "pending" ? sum + t.amount : sum),
+    (sum, t) => (t.status === "pending" ? sum + Number(t.amount) : sum),
     0
   );
   const processingTotal = transactions.reduce(
-    (sum, t) => (t.status === "processing" ? sum + t.amount : sum),
+    (sum, t) => (t.status === "processing" ? sum + Number(t.amount) : sum),
     0
   );
   const creditLimit = 50000;

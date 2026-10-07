@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, FormEvent } from "react";
+import { useState, useRef, FormEvent, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import {
   ArrowLeft,
@@ -11,31 +11,39 @@ import {
   Save,
 } from "lucide-react";
 import Link from "next/link";
+import { getInitialTransactionStatus, serviceCategories } from "@/lib/transaction-form";
 
 export default function NewTransactionPage() {
   const router = useRouter();
   const [form, setForm] = useState({
+    vendorId: "",
     vendorName: "",
     vendorEmail: "",
-    serviceType: "cargo",
-    referenceType: "AWB",
+    serviceType: "Flete marítimo",
+    referenceType: "",
     referenceNumber: "",
     relatedReference: "",
-    customerReference: "",
-    departureDate: "",
-    arrivalDate: "",
+
     paymentDate: "",
-    direction: "importacion",
-    hasArrived: "no",
+    paymentTiming: "today",
     amount: "",
     commercialValue: "",
     description: "",
-    paymentMethod: "financiamiento",
+    paymentMethod: "local_transfer",
     attachmentName: "",
   });
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [ocrRunning, setOcrRunning] = useState(false);
+  const [vendors, setVendors] = useState<Array<{ id: string; name: string; billingEmail: string }>>([]);
+  const [vendorDraft, setVendorDraft] = useState({ name: "", billingEmail: "" });
+  const [vendorError, setVendorError] = useState("");
+  const [vendorSaving, setVendorSaving] = useState(false);
+  useEffect(() => {
+    fetch("/api/vendors").then((response) => response.json()).then((data) => {
+      if (Array.isArray(data.vendors)) setVendors(data.vendors);
+    }).catch(() => setVendorError("No se pudo cargar el directorio de proveedores."));
+  }, []);
   const [ocrResult, setOcrResult] = useState<{
     confidence: number;
     source: string;
@@ -60,14 +68,9 @@ export default function NewTransactionPage() {
         return;
       }
       const ex = data.extracted;
-      // Auto-populate fields from OCR result
-      setForm((prev) => ({
-        ...prev,
-        vendorName: ex.vendorName || prev.vendorName,
-        amount: ex.amount ? String(ex.amount) : prev.amount,
-        paymentDate: ex.dueDate || prev.paymentDate,
-        attachmentName: file.name,
-      }));
+      // The document is analyzed, but vendor/payment values are never assumed from OCR.
+      setForm((previous) => ({ ...previous, attachmentName: file.name }));
+
       setOcrResult({
         confidence: ex.confidence,
         source: ex.source,
@@ -81,17 +84,29 @@ export default function NewTransactionPage() {
     }
   }
 
-  async function handleSubmit(e: FormEvent, approveNow = false) {
+  async function handleSubmit(e: FormEvent) {
     e.preventDefault();
     setError("");
 
+    const initialStatus = getInitialTransactionStatus(
+      form.paymentTiming as "today" | "scheduled",
+      form.paymentDate
+    );
     if (
-      !form.vendorName ||
+      !form.vendorId ||
       !form.referenceNumber ||
       !form.amount ||
       parseFloat(form.amount) <= 0
     ) {
       setError("Proveedor, referencia y monto válido son obligatorios.");
+      return;
+    }
+    if (!form.vendorEmail.trim()) {
+      setError("El proveedor seleccionado no tiene correo facturable. Selecciona otro proveedor o agrega uno con correo válido.");
+      return;
+    }
+    if (!initialStatus) {
+      setError("Selecciona una fecha futura para programar el pago.");
       return;
     }
 
@@ -102,11 +117,18 @@ export default function NewTransactionPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          vendorName: form.vendorName,
-          vendorEmail: form.vendorEmail || undefined,
+          vendorId: form.vendorId,
           amount: form.amount,
-          description: buildDescription(approveNow),
+          description: buildDescription(),
           paymentMethod: form.paymentMethod,
+          referenceType: form.referenceType || null,
+          referenceNumber: form.referenceNumber,
+          serviceType: form.serviceType,
+          relatedReference: form.relatedReference || null,
+          commercialValue: form.commercialValue || null,
+          paymentTiming: form.paymentTiming,
+          scheduledFor: form.paymentTiming === "scheduled" ? form.paymentDate : null,
+          status: initialStatus,
         }),
       });
 
@@ -129,21 +151,35 @@ export default function NewTransactionPage() {
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
   ) => setForm((prev) => ({ ...prev, [field]: e.target.value }));
 
+  async function addVendor() {
+    setVendorError("");
+    setVendorSaving(true);
+    try {
+      const response = await fetch("/api/vendors", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(vendorDraft),
+      });
+      const data = await response.json();
+      if (!response.ok) { setVendorError(data.error || "No se pudo guardar el proveedor."); return; }
+      setVendors((current) => [...current, data.vendor].sort((a, b) => a.name.localeCompare(b.name)));
+      setForm((current) => ({ ...current, vendorId: data.vendor.id, vendorName: data.vendor.name, vendorEmail: data.vendor.billingEmail }));
+      setVendorDraft({ name: "", billingEmail: "" });
+    } catch { setVendorError("No se pudo guardar el proveedor."); }
+    finally { setVendorSaving(false); }
+  }
+
   const paymentMethods = [
     {
-      value: "financiamiento",
-      label: "Financiamiento ITERA",
-      description: "Usa crédito disponible para liberar el pago.",
+      value: "local_transfer",
+      label: "Transferencia local",
     },
     {
-      value: "ach",
-      label: "Débito ACH",
-      description: "Pago desde cuenta bancaria autorizada.",
+      value: "international_transfer",
+      label: "Transferencia internacional",
     },
     {
-      value: "wire",
-      label: "Transferencia bancaria",
-      description: "Para operaciones manuales o de mayor monto.",
+      value: "card",
+      label: "Tarjeta crédito/débito",
     },
   ];
 
@@ -151,28 +187,12 @@ export default function NewTransactionPage() {
     (method) => method.value === form.paymentMethod
   );
   const amount = parseFloat(form.amount) || 0;
-  const serviceFee = amount > 0 ? Math.max(amount * 0.012, 8) : 0;
-  const financingFee = form.paymentMethod === "financiamiento" ? amount * 0.018 : 0;
-  const total = amount + serviceFee + financingFee;
 
-  function buildDescription(approveNow: boolean) {
+  function buildDescription() {
     return [
-      form.description,
-      `Referencia ${form.referenceType}: ${form.referenceNumber}`,
-      form.relatedReference && `Referencia relacionada: ${form.relatedReference}`,
-      form.customerReference && `Referencia cliente: ${form.customerReference}`,
-      `Tipo de servicio: ${form.serviceType}`,
-      `Dirección: ${form.direction}`,
-      `Carga recibida: ${form.hasArrived === "si" ? "Sí" : "No"}`,
-      form.departureDate && `Salida: ${form.departureDate}`,
-      form.arrivalDate && `Llegada: ${form.arrivalDate}`,
-      form.paymentDate && `Fecha de pago: ${form.paymentDate}`,
-      form.commercialValue && `Valor comercial: ${form.commercialValue}`,
       form.attachmentName && `Adjunto declarado: ${form.attachmentName}`,
-      approveNow ? "Acción: guardar y aprobar pago" : "Acción: guardar transacción",
-    ]
-      .filter(Boolean)
-      .join("\n");
+      form.description && `Notas internas: ${form.description}`,
+    ].filter(Boolean).join("\n") || null;
   }
 
   return (
@@ -189,22 +209,9 @@ export default function NewTransactionPage() {
 
         <div className="mb-8 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
           <div>
-            <span className="text-xs font-semibold uppercase tracking-widest text-brand-gray">
-              Transacción
-            </span>
             <h1 className="mt-3 text-3xl font-bold text-brand-near-black">
               Crear transacción
             </h1>
-            <p className="mt-2 max-w-2xl text-sm leading-relaxed text-brand-gray">
-              Registra el proveedor, la referencia logística, el monto y los
-              documentos necesarios antes de guardar o aprobar el pago.
-            </p>
-          </div>
-          <div className="rounded-2xl border border-brand-beige-dark/20 bg-white/60 px-5 py-4 text-sm text-brand-gray backdrop-blur-xl">
-            <span className="font-semibold text-brand-near-black">
-              Estado inicial:
-            </span>{" "}
-            Creado, pendiente de aprobación
           </div>
         </div>
 
@@ -228,39 +235,44 @@ export default function NewTransactionPage() {
                   <h2 className="text-lg font-semibold text-brand-near-black">
                     Datos de proveedor y referencia
                   </h2>
-                  <p className="text-sm text-brand-gray">
-                    Identifica a quién se paga y qué documento libera la carga.
-                  </p>
                 </div>
               </div>
 
               <div className="grid gap-5 md:grid-cols-2">
-                <Field
-                  id="vendorName"
+                <SelectField
+                  id="vendorId"
                   label="Proveedor / facturador *"
-                  value={form.vendorName}
-                  onChange={updateField("vendorName")}
-                  placeholder="American Airlines Cargo"
+                  value={form.vendorId}
+                  onChange={(event) => {
+                    const vendor = vendors.find((item) => item.id === event.target.value);
+                    setForm((current) => ({ ...current, vendorId: vendor?.id || "", vendorName: vendor?.name || "", vendorEmail: vendor?.billingEmail || "" }));
+                  }}
+                  options={[["", "Selecciona un proveedor"], ...vendors.map((vendor) => [vendor.id, vendor.name] as [string, string])]}
                 />
-                <Field
-                  id="vendorEmail"
-                  type="email"
-                  label="Correo del proveedor"
-                  value={form.vendorEmail}
-                  onChange={updateField("vendorEmail")}
-                  placeholder="billing@proveedor.com"
-                />
+                <div>
+                  <Field
+                    id="vendorEmail"
+                    type="email"
+                    label="Correo facturable"
+                    value={form.vendorEmail}
+                    onChange={() => undefined}
+                    placeholder="Se completa desde el directorio"
+                    readOnly
+                  />
+                  {form.vendorId && !form.vendorEmail.trim() && (
+                    <p role="alert" className="mt-2 text-sm text-red-700">
+                      El proveedor seleccionado no tiene correo facturable. Selecciona otro proveedor o agrega uno con correo válido.
+                    </p>
+                  )}
+                </div>
                 <SelectField
                   id="serviceType"
                   label="Tipo de servicio"
                   value={form.serviceType}
                   onChange={updateField("serviceType")}
-                  options={[
-                    ["cargo", "Cargo / flete"],
-                    ["aduana", "Aduana"],
-                    ["terminal", "Terminal"],
-                    ["almacenaje", "Almacenaje"],
-                  ]}
+                  options={serviceCategories.map(
+                    (category) => [category, category] as [string, string]
+                  )}
                 />
                 <SelectField
                   id="referenceType"
@@ -268,6 +280,7 @@ export default function NewTransactionPage() {
                   value={form.referenceType}
                   onChange={updateField("referenceType")}
                   options={[
+                    ["", "Opcional"],
                     ["AWB", "AWB"],
                     ["BOL", "BOL"],
                     ["Factura", "Factura"],
@@ -288,24 +301,12 @@ export default function NewTransactionPage() {
                   onChange={updateField("relatedReference")}
                   placeholder="Referencia opcional"
                 />
-                <Field
-                  id="customerReference"
-                  label="Referencia de cliente"
-                  value={form.customerReference}
-                  onChange={updateField("customerReference")}
-                  placeholder="Orden / PO / cliente"
-                />
-                <SelectField
-                  id="direction"
-                  label="Dirección"
-                  value={form.direction}
-                  onChange={updateField("direction")}
-                  options={[
-                    ["importacion", "Importación"],
-                    ["exportacion", "Exportación"],
-                    ["domestico", "Doméstico"],
-                  ]}
-                />
+              </div>
+              <div className="mt-5 grid gap-3 rounded-xl bg-brand-beige-light/50 p-4 sm:grid-cols-[1fr_1fr_auto]">
+                <input aria-label="Nombre del proveedor" value={vendorDraft.name} onChange={(event) => setVendorDraft((current) => ({ ...current, name: event.target.value }))} placeholder="Nombre del proveedor" maxLength={160} className="rounded-lg border border-brand-beige-dark/30 bg-white px-3 py-2 text-sm" />
+                <input aria-label="Correo facturable del proveedor" type="email" value={vendorDraft.billingEmail} onChange={(event) => setVendorDraft((current) => ({ ...current, billingEmail: event.target.value }))} placeholder="Correo facturable" maxLength={254} className="rounded-lg border border-brand-beige-dark/30 bg-white px-3 py-2 text-sm" />
+                <button type="button" onClick={() => void addVendor()} disabled={vendorSaving} className="rounded-lg bg-brand-near-black px-3 py-2 text-sm text-white disabled:opacity-50">{vendorSaving ? "Guardando..." : "Agregar proveedor"}</button>
+                {vendorError && <p className="text-sm text-red-700 sm:col-span-3">{vendorError}</p>}
               </div>
             </section>
 
@@ -318,9 +319,6 @@ export default function NewTransactionPage() {
                   <h2 className="text-lg font-semibold text-brand-near-black">
                     Fechas, monto y documentos
                   </h2>
-                  <p className="text-sm text-brand-gray">
-                    Agrega la información necesaria para aprobar el pago.
-                  </p>
                 </div>
               </div>
 
@@ -342,47 +340,44 @@ export default function NewTransactionPage() {
                   placeholder="0.00"
                 />
                 <Field
-                  id="departureDate"
-                  type="date"
-                  label="Fecha de salida"
-                  value={form.departureDate}
-                  onChange={updateField("departureDate")}
-                  placeholder=""
-                />
-                <Field
-                  id="arrivalDate"
-                  type="date"
-                  label="Fecha de llegada"
-                  value={form.arrivalDate}
-                  onChange={updateField("arrivalDate")}
-                  placeholder=""
-                />
-                <Field
                   id="paymentDate"
                   type="date"
-                  label="Fecha de pago"
+                  label="Fecha programada"
                   value={form.paymentDate}
                   onChange={updateField("paymentDate")}
                   placeholder=""
-                />
-                <SelectField
-                  id="hasArrived"
-                  label="¿La carga ya llegó?"
-                  value={form.hasArrived}
-                  onChange={updateField("hasArrived")}
-                  options={[
-                    ["no", "No"],
-                    ["si", "Sí"],
-                  ]}
+                  min={new Date(Date.now() + 86400000).toISOString().slice(0, 10)}
+                  disabled={form.paymentTiming !== "scheduled"}
                 />
               </div>
+              <fieldset className="mt-5">
+                <legend className="mb-2 text-sm font-medium text-brand-warm-dark">Fecha del pago</legend>
+                {[
+                  ["today", "Pagar hoy"],
+                  ["scheduled", "Programar pago"],
+                ].map(([value, label]) => (
+                  <label
+                    key={value}
+                    className="mr-5 inline-flex items-center gap-2 text-sm"
+                  >
+                    <input
+                      type="radio"
+                      name="paymentTiming"
+                      value={value}
+                      checked={form.paymentTiming === value}
+                      onChange={updateField("paymentTiming")}
+                    />
+                    {label}
+                  </label>
+                ))}
+              </fieldset>
 
               <div className="mt-5">
                 <label
                   htmlFor="description"
                   className="block text-sm font-medium text-brand-warm-dark mb-1.5"
                 >
-                  Descripción
+                  Notas internas
                 </label>
                 <textarea
                   id="description"
@@ -401,10 +396,6 @@ export default function NewTransactionPage() {
                     <div>
                       <p className="text-sm font-semibold text-brand-near-black">
                         Factura o documento comercial
-                      </p>
-                      <p className="mt-1 text-xs leading-relaxed text-brand-gray">
-                        Sube una foto de la factura y ITERA auto-llenará los
-                        campos con reconocimiento OCR.
                       </p>
                     </div>
                   </div>
@@ -436,8 +427,7 @@ export default function NewTransactionPage() {
                   <div className="mt-3 flex items-center gap-2 rounded-xl bg-green-50 border border-green-200 px-4 py-2.5 text-sm text-green-700">
                     <CheckCircle2 size={16} />
                     <span>
-                      Factura leída ({Math.round(ocrResult.confidence * 100)}%
-                      confianza) — campos auto-llenados.
+                      Factura procesada ({Math.round(ocrResult.confidence * 100)}% confianza).
                     </span>
                   </div>
                 )}
@@ -450,9 +440,6 @@ export default function NewTransactionPage() {
               <h2 className="text-lg font-semibold text-brand-near-black">
                 Método de pago
               </h2>
-              <p className="mt-2 text-sm leading-relaxed text-brand-gray">
-                Selecciona cómo quieres financiar o debitar esta transacción.
-              </p>
 
               <div className="mt-5 grid gap-3">
                 {paymentMethods.map((method) => (
@@ -471,13 +458,12 @@ export default function NewTransactionPage() {
                       checked={form.paymentMethod === method.value}
                       onChange={updateField("paymentMethod")}
                       className="sr-only"
+                      aria-label={method.label}
                     />
                     <span className="block text-sm font-semibold text-brand-near-black">
                       {method.label}
                     </span>
-                    <span className="mt-1 block text-xs leading-relaxed text-brand-gray">
-                      {method.description}
-                    </span>
+
                   </label>
                 ))}
               </div>
@@ -485,10 +471,6 @@ export default function NewTransactionPage() {
 
             <section className="rounded-3xl border border-brand-beige-dark/20 bg-brand-near-black p-6 text-white shadow-xl">
               <h2 className="text-lg font-semibold">Resumen del pago</h2>
-              <p className="mt-2 text-sm leading-relaxed text-white/60">
-                Revisa el total antes de guardar o aprobar.
-              </p>
-
               <div className="mt-6 space-y-3 text-sm">
                 <SummaryRow label="Proveedor" value={form.vendorName || "Pendiente"} dark />
                 <SummaryRow
@@ -502,12 +484,6 @@ export default function NewTransactionPage() {
                 />
                 <SummaryRow label="Método" value={selectedPayment?.label || "Pendiente"} dark />
                 <SummaryRow label="Monto" value={formatMoney(amount)} dark />
-                <SummaryRow label="Fee de servicio" value={formatMoney(serviceFee)} dark />
-                <SummaryRow label="Fee financiero" value={formatMoney(financingFee)} dark />
-                <div className="flex items-center justify-between border-t border-white/15 pt-4">
-                  <span className="text-sm font-medium text-white/70">Total</span>
-                  <span className="text-2xl font-semibold">{formatMoney(total)}</span>
-                </div>
               </div>
 
               <div className="mt-6 grid gap-3">
@@ -525,24 +501,16 @@ export default function NewTransactionPage() {
                     </>
                   )}
                 </button>
-                <button
-                  type="button"
-                  disabled={loading}
-                  onClick={(event) => handleSubmit(event as unknown as FormEvent, true)}
-                  className="inline-flex items-center justify-center gap-2 rounded-full border border-white/20 px-5 py-3 text-sm font-medium text-white transition-all hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-50"
-                >
-                  <CheckCircle2 size={16} />
-                  Guardar y aprobar pago
-                </button>
+
               </div>
             </section>
 
             <section className="rounded-3xl border border-brand-beige-dark/20 bg-white/65 p-6 shadow-xl backdrop-blur-xl">
               <h2 className="text-lg font-semibold text-brand-near-black">
-                Flujo de aprobación
+                Estado del pago
               </h2>
               <div className="mt-5 space-y-4">
-                {["Creada", "Validación documental", "Aprobación", "Pago enviado"].map(
+                {["Creada", form.paymentTiming === "scheduled" ? "Programada" : "Marcar como pagada"].map(
                   (item, index) => (
                     <div key={item} className="flex items-center gap-3">
                       <span
@@ -574,6 +542,9 @@ function Field({
   onChange,
   placeholder,
   type = "text",
+  min,
+  disabled = false,
+  readOnly = false,
 }: {
   id: string;
   label: string;
@@ -583,6 +554,9 @@ function Field({
   ) => void;
   placeholder: string;
   type?: string;
+  min?: string;
+  disabled?: boolean;
+  readOnly?: boolean;
 }) {
   return (
     <div>
@@ -596,7 +570,9 @@ function Field({
         id={id}
         type={type}
         step={type === "number" ? "0.01" : undefined}
-        min={type === "number" ? "0" : undefined}
+        min={min || (type === "number" ? "0" : undefined)}
+        disabled={disabled}
+        readOnly={readOnly}
         value={value}
         onChange={onChange}
         className="w-full rounded-xl border border-brand-beige-dark/30 bg-white px-4 py-2.5 text-brand-charcoal placeholder:text-brand-taupe transition-all focus:border-brand-near-black focus:outline-none focus:ring-2 focus:ring-brand-near-black/20"

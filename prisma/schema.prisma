@@ -1,3 +1,5 @@
+// Local SQLite tooling schema. Production PostgreSQL precision is defined in schema.sql
+// and the explicit Neon migration (Transaction amount/commercialValue NUMERIC(12,2)).
 generator client {
   provider = "prisma-client-js"
 }
@@ -19,6 +21,20 @@ model User {
   accounts      BankAccount[]
   transactions  Transaction[]
   sentTxns      Transaction[]  @relation("SentTransactions")
+  vendors       Vendor[]
+}
+
+model Vendor {
+  id           String        @id @default(uuid())
+  userId       String
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name         String
+  billingEmail String
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  transactions Transaction[]
+
+  @@index([userId, name])
 }
 
 model BankAccount {
@@ -43,6 +59,15 @@ model Transaction {
   sender        User?    @relation("SentTransactions", fields: [senderId], references: [id])
   vendorName    String
   vendorEmail   String?
+  vendorId      String?
+  // SQLite local relation; Neon uses the tenant-aware composite FK in schema.sql/migration.
+  vendor        Vendor?  @relation(fields: [vendorId], references: [id], onDelete: SetNull)
+  serviceType   String?
+  referenceType String?
+  referenceNumber String?
+  relatedReference String?
+  commercialValue Float?
+  scheduledFor  DateTime?
   amount        Float
   currency      String   @default("USD")
   status        String   @default("pending") // pending, processing, completed, failed

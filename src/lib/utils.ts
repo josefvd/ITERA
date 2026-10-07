@@ -8,11 +8,13 @@ export async function verifyPassword(password: string, hashedPassword: string) {
   return compare(password, hashedPassword);
 }
 
-export function formatCurrency(amount: number, currency = "USD") {
+export function formatCurrency(amount: number | string, currency = "USD") {
+  const numericAmount = typeof amount === "number" ? amount : Number(amount);
+  if (!Number.isFinite(numericAmount)) return "—";
   return new Intl.NumberFormat("en-US", {
     style: "currency",
     currency,
-  }).format(amount);
+  }).format(numericAmount);
 }
 
 export function formatDate(date: Date | string) {

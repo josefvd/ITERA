@@ -12,23 +12,24 @@ import {
   Paperclip,
   Printer,
   Save,
-  ShieldCheck,
-  XCircle,
 } from "lucide-react";
 import { formatCurrency, formatDate, getStatusColor } from "@/lib/utils";
-import {
-  TransactionStatus,
-  transactionActionMessages,
-} from "@/lib/transaction-status";
+import { canTransitionTransactionStatus, getTransactionFlowSteps, TransactionStatus } from "@/lib/transaction-status";
 
 interface Transaction {
   id: string;
   vendorName: string;
   vendorEmail: string | null;
-  amount: number;
+  amount: number | string;
   status: string;
   paymentMethod: string | null;
   description: string | null;
+  serviceType?: string | null;
+  referenceType?: string | null;
+  referenceNumber?: string | null;
+  relatedReference?: string | null;
+  commercialValue?: number | null;
+  scheduledFor?: string | null;
   createdAt: string;
 }
 
@@ -76,12 +77,15 @@ export default function TransactionDetailPage() {
     [transaction?.description]
   );
   const visibleStatus = transaction?.status || "pending";
-  const serviceFee = transaction ? Math.max(transaction.amount * 0.012, 8) : 0;
-  const financingFee =
-    transaction?.paymentMethod === "financiamiento"
-      ? transaction.amount * 0.018
-      : 0;
-  const total = (transaction?.amount || 0) + serviceFee + financingFee;
+  const canMarkPaid = transaction
+    ? canTransitionTransactionStatus(visibleStatus, "paid", transaction.scheduledFor)
+    : false;
+  const flowSteps = transaction
+    ? getTransactionFlowSteps(visibleStatus, transaction.scheduledFor)
+    : [];
+  const completedFlowSteps = visibleStatus === "paid" || visibleStatus === "completed"
+    ? flowSteps.length
+    : visibleStatus === "scheduled" ? 2 : 1;
 
   async function handleAction(action: string, nextStatus?: TransactionStatus) {
     setNotice("");
@@ -113,11 +117,7 @@ export default function TransactionDetailPage() {
       }
 
       setTransaction(data.transaction);
-      setNotice(
-        transactionActionMessages[
-          nextStatus as keyof typeof transactionActionMessages
-        ] || action
-      );
+      setNotice(action);
     } catch {
       setError("Error al actualizar la transacción");
     } finally {
@@ -225,16 +225,12 @@ export default function TransactionDetailPage() {
               <div className="mt-6 grid gap-4 md:grid-cols-2">
                 <Info label="Proveedor" value={transaction.vendorName} />
                 <Info label="Correo proveedor" value={transaction.vendorEmail || "No registrado"} />
-                <Info label="Tipo de referencia" value={details.tipoReferencia || "Pago"} />
-                <Info label="Referencia" value={details.referencia || "Sin referencia"} />
-                <Info label="Referencia relacionada" value={details.relacionada || "No registrada"} />
-                <Info label="Referencia cliente" value={details.cliente || "No registrada"} />
-                <Info label="Tipo de servicio" value={details.servicio || "No registrado"} />
-                <Info label="Dirección" value={details.direccion || "No registrada"} />
-                <Info label="Salida" value={details.salida || "No registrada"} />
-                <Info label="Llegada" value={details.llegada || "No registrada"} />
-                <Info label="Fecha de pago" value={details.fechaPago || "No registrada"} />
-                <Info label="Carga recibida" value={details.cargaRecibida || "No registrada"} />
+                <Info label="Tipo de referencia" value={transaction.referenceType || details.tipoReferencia || "No registrado"} />
+                <Info label="Referencia" value={transaction.referenceNumber || details.referencia || "Sin referencia"} />
+                <Info label="Referencia relacionada" value={transaction.relatedReference || details.relacionada || "No registrada"} />
+                <Info label="Tipo de servicio" value={transaction.serviceType || details.servicio || "No registrado"} />
+                <Info label="Valor comercial" value={transaction.commercialValue != null ? formatCurrency(Number(transaction.commercialValue)) : details.valorComercial || "No registrado"} />
+                <Info label="Fecha programada" value={transaction.scheduledFor ? formatDate(transaction.scheduledFor) : details.fechaProgramada || "No aplica"} />
               </div>
             </section>
 
@@ -248,10 +244,6 @@ export default function TransactionDetailPage() {
               <div className="mt-5 rounded-2xl border border-dashed border-brand-beige-dark/50 bg-brand-beige-light/60 p-5">
                 <p className="text-sm font-semibold text-brand-near-black">
                   {details.adjunto || "Sin archivo adjunto"}
-                </p>
-                <p className="mt-1 text-xs leading-relaxed text-brand-gray">
-                  La carga real de documentos queda lista para el siguiente paso.
-                  Por ahora mostramos el nombre declarado en la transacción.
                 </p>
               </div>
             </section>
@@ -269,17 +261,9 @@ export default function TransactionDetailPage() {
                 <AuditItem
                   icon={FileText}
                   title="Documentación registrada"
-                  detail={details.adjunto ? details.adjunto : "Pendiente de adjunto real"}
+                  detail={details.adjunto || "Sin archivo adjunto"}
                 />
-                <AuditItem
-                  icon={ShieldCheck}
-                  title="Aprobación"
-                  detail={
-                    visibleStatus === "completed"
-                      ? "Pago aprobado"
-                      : "Pendiente de aprobación"
-                  }
-                />
+                <AuditItem icon={CheckCircle2} title="Estado del pago" detail={getStatusLabel(visibleStatus)} />
               </div>
             </section>
           </div>
@@ -289,16 +273,10 @@ export default function TransactionDetailPage() {
               <h2 className="text-lg font-semibold">Resumen de pago</h2>
               <div className="mt-6 space-y-3 text-sm">
                 <Summary label="Monto" value={formatCurrency(transaction.amount)} />
-                <Summary label="Fee de servicio" value={formatCurrency(serviceFee)} />
-                <Summary label="Fee financiero" value={formatCurrency(financingFee)} />
                 <Summary
                   label="Método"
                   value={getMethodLabel(transaction.paymentMethod || "—")}
                 />
-                <div className="flex items-center justify-between border-t border-white/15 pt-4">
-                  <span className="text-white/65">Total</span>
-                  <span className="text-2xl font-semibold">{formatCurrency(total)}</span>
-                </div>
               </div>
             </section>
 
@@ -313,30 +291,15 @@ export default function TransactionDetailPage() {
                   disabled={savingAction !== null}
                   onClick={() => handleAction("Transacción guardada")}
                 />
-                <ActionButton
-                  icon={CheckCircle2}
-                  label={
-                    savingAction === "completed" ? "Aprobando..." : "Aprobar pago"
-                  }
-                  strong
-                  disabled={savingAction !== null}
-                  onClick={() =>
-                    handleAction("Pago aprobado y proveedor notificado", "completed")
-                  }
-                />
-                <ActionButton
-                  icon={AlertTriangle}
-                  label={savingAction === "failed" ? "Marcando..." : "Disputar"}
-                  disabled={savingAction !== null}
-                  onClick={() => handleAction("Transacción marcada para disputa", "failed")}
-                />
-                <ActionButton
-                  icon={XCircle}
-                  label={savingAction === "cancelled" ? "Anulando..." : "Anular"}
-                  danger
-                  disabled={savingAction !== null}
-                  onClick={() => handleAction("Transacción anulada", "cancelled")}
-                />
+                {canMarkPaid && (
+                  <ActionButton
+                    icon={CheckCircle2}
+                    label={savingAction === "paid" ? "Actualizando..." : "Marcar como pagada"}
+                    strong
+                    disabled={savingAction !== null}
+                    onClick={() => handleAction("Pago marcado como pagado", "paid")}
+                  />
+                )}
               </div>
             </section>
 
@@ -345,22 +308,20 @@ export default function TransactionDetailPage() {
                 Flujo
               </h2>
               <div className="mt-5 space-y-4">
-                {["Creada", "Validación documental", "Aprobación", "Pago enviado"].map(
-                  (item, index) => (
-                    <div key={item} className="flex items-center gap-3">
-                      <span
-                        className={`flex h-7 w-7 items-center justify-center rounded-full text-xs font-semibold ${
-                          index === 0 || (visibleStatus === "completed" && index < 4)
-                            ? "bg-brand-near-black text-white"
-                            : "bg-brand-beige text-brand-warm-dark"
-                        }`}
-                      >
-                        {index + 1}
-                      </span>
-                      <span className="text-sm text-brand-warm-dark">{item}</span>
-                    </div>
-                  )
-                )}
+                {flowSteps.map((item, index) => (
+                  <div key={item} className="flex items-center gap-3">
+                    <span
+                      className={`flex h-7 w-7 items-center justify-center rounded-full text-xs font-semibold ${
+                        index < completedFlowSteps
+                          ? "bg-brand-near-black text-white"
+                          : "bg-brand-beige text-brand-warm-dark"
+                      }`}
+                    >
+                      {index + 1}
+                    </span>
+                    <span className="text-sm text-brand-warm-dark">{item}</span>
+                  </div>
+                ))}
               </div>
             </section>
           </aside>
@@ -379,15 +340,11 @@ function parseDescription(description: string) {
 
   return {
     tipoReferencia: referenceMatch?.[1] || "",
-    referencia: referenceMatch?.[2]?.split("\n")[0] || "",
+    referencia: referenceMatch?.[2]?.split("\n")[0] || read("Referencia"),
     relacionada: read("Referencia relacionada"),
-    cliente: read("Referencia cliente"),
     servicio: read("Tipo de servicio"),
-    direccion: read("Dirección"),
-    cargaRecibida: read("Carga recibida"),
-    salida: read("Salida"),
-    llegada: read("Llegada"),
-    fechaPago: read("Fecha de pago"),
+    valorComercial: read("Valor comercial"),
+    fechaProgramada: read("Fecha programada"),
     adjunto: read("Adjunto declarado"),
   };
 }
@@ -472,9 +429,10 @@ function ActionButton({
 
 function getStatusLabel(status: string) {
   const labels: Record<string, string> = {
-    pending: "Pendiente",
+    pending: "Creada",
+    scheduled: "Programada",
     processing: "Procesando",
-    completed: "Aprobada",
+    completed: "Completada",
     paid: "Pagada",
     failed: "En disputa",
     cancelled: "Anulada",

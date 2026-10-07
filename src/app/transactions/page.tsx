@@ -10,10 +10,8 @@ import {
   CheckCircle2,
   Clock,
   FileCheck2,
-  Layers3,
   Plus,
   Search,
-  ShieldCheck,
 } from "lucide-react";
 import { formatCurrency, formatDate, getStatusColor } from "@/lib/utils";
 
@@ -21,7 +19,7 @@ interface Transaction {
   id: string;
   vendorName: string;
   vendorEmail: string | null;
-  amount: number;
+  amount: number | string;
   status: string;
   paymentMethod: string | null;
   description: string | null;
@@ -80,12 +78,10 @@ export default function TransactionsPage() {
     return matchesSearch && matchesStatus && matchesMethod && matchesDate;
   });
   const pendingCount = transactions.filter((tx) => tx.status === "pending").length;
-  const approvedCount = transactions.filter((tx) =>
-    ["completed", "paid"].includes(tx.status)
-  ).length;
-  const totalAmount = transactions.reduce((sum, tx) => sum + tx.amount, 0);
+  const approvedCount = transactions.filter((tx) => tx.status === "paid").length;
+  const totalAmount = transactions.reduce((sum, tx) => sum + Number(tx.amount), 0);
   const pendingAmount = transactions.reduce(
-    (sum, tx) => (tx.status === "pending" ? sum + tx.amount : sum),
+    (sum, tx) => (tx.status === "pending" ? sum + Number(tx.amount) : sum),
     0
   );
   const paymentMethods = Array.from(
@@ -94,7 +90,8 @@ export default function TransactionsPage() {
 
   const getStatusLabel = (status: string) => {
     const labels: Record<string, string> = {
-      pending: "Pendiente",
+      pending: "Creada",
+      scheduled: "Programada",
       processing: "Procesando",
       completed: "Completada",
       paid: "Pagada",
@@ -124,26 +121,8 @@ export default function TransactionsPage() {
               <h1 className="mt-3 text-3xl font-semibold tracking-tight text-brand-near-black">
                 Transacciones
               </h1>
-              <p className="mt-2 max-w-2xl text-sm leading-relaxed text-brand-gray">
-                Busca, filtra y prepara aprobaciones para pagos de flete,
-                proveedores y documentos logísticos.
-              </p>
             </div>
             <div className="flex flex-col gap-3 sm:flex-row">
-              <button
-                type="button"
-                className="inline-flex items-center justify-center gap-2 rounded-full border border-brand-beige-dark/30 px-5 py-3 text-sm font-medium text-brand-near-black transition-all hover:bg-brand-beige/50"
-              >
-                <Layers3 size={16} />
-                Batch
-              </button>
-              <button
-                type="button"
-                className="inline-flex items-center justify-center gap-2 rounded-full border border-brand-beige-dark/30 px-5 py-3 text-sm font-medium text-brand-near-black transition-all hover:bg-brand-beige/50"
-              >
-                <ShieldCheck size={16} />
-                Aprobar
-              </button>
               <Link
                 href="/transactions/new"
                 className="inline-flex items-center justify-center gap-2 rounded-full bg-brand-near-black px-5 py-3 text-sm font-medium text-white transition-all hover:bg-black"
@@ -170,15 +149,15 @@ export default function TransactionsPage() {
           />
           <StatCard
             icon={Clock}
-            label="Pendientes"
+            label="Creadas"
             value={pendingCount.toString()}
             detail={formatCurrency(pendingAmount)}
           />
           <StatCard
             icon={CheckCircle2}
-            label="Aprobadas"
+            label="Pagadas"
             value={approvedCount.toString()}
-            detail="Pagadas o completadas"
+            detail="Estado final registrado"
           />
           <StatCard
             icon={ArrowDownToLine}
@@ -209,7 +188,8 @@ export default function TransactionsPage() {
               className="rounded-xl border border-brand-beige-dark/30 bg-white px-4 py-2.5 text-sm text-brand-charcoal focus:outline-none focus:ring-2 focus:ring-brand-near-black/20"
             >
               <option value="all">Todos los estados</option>
-              <option value="pending">Pendientes</option>
+              <option value="pending">Creadas</option>
+              <option value="scheduled">Programadas</option>
               <option value="processing">Procesando</option>
               <option value="completed">Completadas</option>
               <option value="paid">Pagadas</option>
@@ -412,9 +392,9 @@ function StatCard({
 
 function getMethodLabel(method: string) {
   const labels: Record<string, string> = {
-    financiamiento: "Financiamiento ITERA",
-    ach: "Débito ACH",
-    wire: "Transferencia",
+    local_transfer: "Transferencia bancaria local",
+    international_transfer: "Transferencia internacional",
+    card: "Tarjeta de crédito/débito",
     prepaid: "Prepago",
   };
   return labels[method] || method;
@@ -422,6 +402,6 @@ function getMethodLabel(method: string) {
 
 function extractReference(description: string | null) {
   if (!description) return null;
-  const match = description.match(/Referencia\s(?:AWB|BOL|Factura|Otro):\s(.+)/i);
+  const match = description.match(/Referencia(?:\s(?:AWB|BOL|Factura|Otro))?:\s(.+)/i);
   return match?.[1]?.split("\n")[0] ?? null;
 }

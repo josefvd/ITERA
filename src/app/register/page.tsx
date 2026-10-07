@@ -3,12 +3,11 @@
 import { useState, FormEvent } from "react";
 import Link from "next/link";
 import { siteConfig } from "@/lib/constants";
-import { Building2, CheckCircle2, ShieldCheck, UserPlus, WalletCards } from "lucide-react";
+import { Building2, CheckCircle2, ShieldCheck, UserPlus } from "lucide-react";
 
 const steps = [
   { label: "Cuenta", icon: UserPlus },
   { label: "Empresa", icon: Building2 },
-  { label: "Banco", icon: WalletCards },
   { label: "Verificación", icon: ShieldCheck },
   { label: "Confirmación", icon: CheckCircle2 },
 ];
@@ -22,7 +21,6 @@ export default function RegisterPage() {
     phone: "",
     taxId: "",
     address: "",
-    bankingPreference: "despues",
     acceptedTerms: false,
     password: "",
     confirmPassword: "",
@@ -106,7 +104,7 @@ export default function RegisterPage() {
       return false;
     }
 
-    if (currentStep === 3 && !form.acceptedTerms) {
+    if (currentStep === 2 && !form.acceptedTerms) {
       setError("Debes aceptar los términos para continuar.");
       return false;
     }
@@ -135,13 +133,12 @@ export default function RegisterPage() {
             Crea tu cuenta en {siteConfig.name}
           </h1>
           <p className="mx-auto mt-3 max-w-2xl text-sm leading-relaxed text-brand-gray">
-            Configura tu perfil de pagos, empresa y verificación en pocos pasos.
-            La información bancaria puede agregarse ahora o más adelante.
+            Registra tu cuenta y los datos de tu empresa en pocos pasos.
           </p>
         </div>
 
         <div className="rounded-3xl border border-brand-beige-dark/20 bg-white/65 p-6 shadow-xl backdrop-blur-xl md:p-8">
-          <div className="mb-8 grid grid-cols-1 gap-3 md:grid-cols-5">
+          <div className="mb-8 grid grid-cols-1 gap-3 md:grid-cols-4">
             {steps.map((item, index) => {
               const Icon = item.icon;
               const active = index === step;
@@ -194,12 +191,11 @@ export default function RegisterPage() {
                     Datos de acceso
                   </h2>
                   <p className="mt-2 text-sm leading-relaxed text-brand-gray">
-                    Crea el usuario administrador de la cuenta. Este perfil
-                    gestionará pagos, proveedores y aprobaciones.
+                    Crea el usuario que administrará la cuenta de tu empresa.
                   </p>
                   <div className="mt-6 grid gap-3">
                     {[
-                      ["pagador", "Pagador", "Empresa que realiza pagos de flete."],
+                      ["pagador", "Empresa que realiza pagos de comercio exterior", ""],
                       ["proveedor", "Proveedor", "Empresa que recibe pagos."],
                     ].map(([value, label, description]) => (
                       <label
@@ -221,9 +217,11 @@ export default function RegisterPage() {
                         <span className="block text-sm font-semibold text-brand-near-black">
                           {label}
                         </span>
-                        <span className="mt-1 block text-xs text-brand-gray">
-                          {description}
-                        </span>
+                        {description && (
+                          <span className="mt-1 block text-xs text-brand-gray">
+                            {description}
+                          </span>
+                        )}
                       </label>
                     ))}
                   </div>
@@ -273,10 +271,6 @@ export default function RegisterPage() {
                   <h2 className="text-xl font-semibold text-brand-near-black">
                     Información de empresa
                   </h2>
-                  <p className="mt-2 text-sm leading-relaxed text-brand-gray">
-                    Estos datos preparan la cuenta para aprobaciones, pagos y
-                    comunicación con proveedores.
-                  </p>
                 </div>
 
                 <div className="grid gap-4">
@@ -319,64 +313,11 @@ export default function RegisterPage() {
               <div className="grid gap-6 md:grid-cols-[0.8fr_1.2fr]">
                 <div>
                   <h2 className="text-xl font-semibold text-brand-near-black">
-                    Configuración bancaria
-                  </h2>
-                  <p className="mt-2 text-sm leading-relaxed text-brand-gray">
-                    Por ahora puedes dejar la conexión bancaria pendiente. ITERA
-                    marcará la cuenta como lista para completar verificación.
-                  </p>
-                </div>
-
-                <div className="grid gap-4">
-                  {[
-                    [
-                      "despues",
-                      "Configurar después",
-                      "Recomendado para empezar rápido y completar datos bancarios con soporte.",
-                    ],
-                    [
-                      "manual",
-                      "Solicitar asistencia bancaria",
-                      "Un especialista de ITERA ayuda a validar la cuenta para pagos.",
-                    ],
-                  ].map(([value, label, description]) => (
-                    <label
-                      key={value}
-                      className={`cursor-pointer rounded-2xl border p-5 transition-all ${
-                        form.bankingPreference === value
-                          ? "border-brand-near-black bg-brand-beige"
-                          : "border-brand-beige-dark/20 bg-white/70"
-                      }`}
-                    >
-                      <input
-                        type="radio"
-                        name="bankingPreference"
-                        value={value}
-                        checked={form.bankingPreference === value}
-                        onChange={updateField("bankingPreference")}
-                        className="sr-only"
-                      />
-                      <span className="block text-sm font-semibold text-brand-near-black">
-                        {label}
-                      </span>
-                      <span className="mt-1 block text-sm text-brand-gray">
-                        {description}
-                      </span>
-                    </label>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {step === 3 && (
-              <div className="grid gap-6 md:grid-cols-[0.8fr_1.2fr]">
-                <div>
-                  <h2 className="text-xl font-semibold text-brand-near-black">
                     Verificación
                   </h2>
                   <p className="mt-2 text-sm leading-relaxed text-brand-gray">
-                    Antes de crear la cuenta, confirma que la información será
-                    revisada para habilitar operaciones de pago.
+                    Revisaremos la información de tu empresa para habilitar pagos de forma segura.
+                    Te enviaremos por correo los siguientes pasos.
                   </p>
                 </div>
 
@@ -393,16 +334,13 @@ export default function RegisterPage() {
                       onChange={updateField("acceptedTerms")}
                       className="mt-1 h-4 w-4 rounded border-brand-beige-dark text-brand-near-black"
                     />
-                    <span>
-                      Acepto los términos de registro y entiendo que mi cuenta
-                      puede quedar pendiente de aprobación.
-                    </span>
+                    <span>Acepto los términos y condiciones.</span>
                   </label>
                 </div>
               </div>
             )}
 
-            {step === 4 && (
+            {step === 3 && (
               <div className="grid gap-6 md:grid-cols-[0.8fr_1.2fr]">
                 <div>
                   <h2 className="text-xl font-semibold text-brand-near-black">
@@ -412,23 +350,18 @@ export default function RegisterPage() {
                     Revisa los datos principales. Después de crear la cuenta,
                     entrarás al dashboard de ITERA.
                   </p>
+                  <p className="mt-3 text-sm leading-relaxed text-brand-gray">
+                    Podrás agregar una tarjeta desde Configuración bancaria cuando la necesites.
+                  </p>
                 </div>
 
                 <div className="grid gap-3 rounded-2xl border border-brand-beige-dark/20 bg-white/70 p-5">
-                  <SummaryRow label="Tipo de cuenta" value={form.accountType === "pagador" ? "Pagador" : "Proveedor"} />
+                  <SummaryRow label="Tipo de cuenta" value={form.accountType === "pagador" ? "Empresa que realiza pagos de comercio exterior" : "Proveedor"} />
                   <SummaryRow label="Administrador" value={form.name || "Pendiente"} />
                   <SummaryRow label="Correo" value={form.email || "Pendiente"} />
                   <SummaryRow label="Empresa" value={form.company || "Pendiente"} />
                   <SummaryRow label="Teléfono" value={form.phone || "Pendiente"} />
-                  <SummaryRow
-                    label="Banco"
-                    value={
-                      form.bankingPreference === "manual"
-                        ? "Asistencia bancaria"
-                        : "Configurar después"
-                    }
-                  />
-                  <SummaryRow label="Estado inicial" value="Pendiente de aprobación" />
+                  <SummaryRow label="Estado inicial" value="Pendiente de revisión" />
                 </div>
               </div>
             )}

@@ -1,10 +1,9 @@
 import jwt from "jsonwebtoken";
 import { cookies } from "next/headers";
-
-const JWT_SECRET = process.env.JWT_SECRET || "itera-dev-secret-key-2024";
+import { requireJwtSecret } from "./jwt-secret";
 
 export async function createToken(payload: { userId: string; email: string }) {
-  return jwt.sign(payload, JWT_SECRET, { expiresIn: "7d" });
+  return jwt.sign(payload, requireJwtSecret(), { expiresIn: "7d" });
 }
 
 export async function getAuthUser() {
@@ -12,7 +11,7 @@ export async function getAuthUser() {
     const cookieStore = await cookies();
     const token = cookieStore.get("itera_token")?.value;
     if (!token) return null;
-    const decoded = jwt.verify(token, JWT_SECRET) as {
+    const decoded = jwt.verify(token, requireJwtSecret()) as {
       userId: string;
       email: string;
     };
